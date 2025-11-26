@@ -1,0 +1,77 @@
+# -------------------------
+# Java / Maven
+# -------------------------
+/target/
+!.mvn/wrapper/maven-wrapper.jar
+.mvn/wrapper/maven-wrapper.properties
+.mvn/wrapper/MavenWrapperDownloader.java
+
+# Compiled class files
+*.class
+
+# Log files
+*.log
+
+# BlueJ files
+*.ctxt
+
+# -------------------------
+# IntelliJ IDEA
+# -------------------------
+.idea/
+*.iml
+out/
+
+# -------------------------
+# VS Code
+# -------------------------
+.vscode/
+
+# -------------------------
+# OS & misc
+# -------------------------
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Linux
+*~
+
+# Archives
+*.zip
+*.tar.gz
+*.rar
+
+# -------------------------
+# Environment / Secrets
+# -------------------------
+.env
+.env.local
+*.key
+*.pem
+*.crt
+
+# -------------------------
+# Docker (optional)
+# -------------------------
+docker-data/
+*.pid
+
+# -------------------------
+# IDE-specific cache
+# -------------------------
+.cache/
+.gradle/
+.settings/
+
+# -------------------------
+# Java tooling artifacts
+# -------------------------
+dependency-reduced-pom.xml
+
