@@ -1,28 +1,43 @@
 package com.laundry.app.controller;
 
+import com.laundry.app.dto.UserCreateRequest;
+import com.laundry.app.dto.UserMapper;
+import com.laundry.app.dto.UserResponse;
 import com.laundry.app.model.User;
 import com.laundry.app.service.UserService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/users")
 public class UserController {
 
     private final UserService userService;
+    private final UserMapper userMapper; // Inject the mapper
 
-    public UserController(UserService userService) {
+    public UserController(UserService userService, UserMapper userMapper) {
         this.userService = userService;
+        this.userMapper = userMapper;
     }
 
     @PostMapping
-    public User createUser(@RequestBody User user) {
-        return userService.createUser(user);
+    public UserResponse createUser(@RequestBody UserCreateRequest request) {
+        // Convert DTO -> Entity
+        User userEntity = userMapper.toEntity(request);
+
+        // Call Service
+        User createdUser = userService.createUser(userEntity);
+
+        // Convert Entity -> DTO
+        return userMapper.toResponse(createdUser);
     }
 
     @GetMapping
-    public List<User> getAllUsers() {
-        return userService.getAllUsers();
+    public List<UserResponse> getAllUsers() {
+        return userService.getAllUsers().stream()
+                .map(userMapper::toResponse)
+                .collect(Collectors.toList());
     }
 }
