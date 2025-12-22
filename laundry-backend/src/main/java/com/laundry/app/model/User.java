@@ -8,15 +8,23 @@ public class User {
 
     @Id // <--- 3. Dice che questo è l'ID univoco
     @GeneratedValue(strategy = GenerationType.IDENTITY) // <--- 4. Dice a MySQL di creare l'ID da solo (1, 2, 3...)
-    private Long id; // Ho cambiato da String a Long perché MySQL lavora meglio con i numeri automatici
+    private Long id;
 
     private String name;
+
     private String email;
 
-    // Costruttore vuoto (obbligatorio per JPA)
+    // 'unique = true' to avoid users with same name
+    @Column(unique = true)
+    private String username;
+
+    private String password;
+
+    @Enumerated(EnumType.STRING)
+    private Role role;
+
     public User() {}
 
-    // Costruttore pieno
     public User(String name, String email) {
         this.name = name;
         this.email = email;
@@ -32,5 +40,26 @@ public class User {
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
 
+    public String getUsername() {
+        return username;
+    }
+    public void setUsername(String username) {
+        this.username = username;
+    }
 
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public Role getRole() {
+        return role;
+    }
+
+    public void setRole(Role role) {
+        this.role = role;
+    }
 }
