@@ -1,0 +1,19 @@
+### 1. Create a new user
+POST http://localhost:8080/api/users
+Content-Type: application/json
+
+{
+  "name": "John Red",
+  "email": "john@test.com"
+}
+
+### 2. Create a new user
+POST http://localhost:8080/api/users
+Content-Type: application/json
+
+{
+  "name": "Mike Turner",
+  "email": "mike@test.com"
+}
+
+GET http://localhost:8080/api/users

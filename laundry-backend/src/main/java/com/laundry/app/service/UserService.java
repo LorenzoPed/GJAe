@@ -2,38 +2,35 @@
 package com.laundry.app.service;
 
 import com.laundry.app.model.User;
+import com.laundry.app.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class UserService {
 
-    private final Map<String, User> users = new ConcurrentHashMap<>();
+    // Instead of Map we use the repository
+    private final UserRepository userRepository;
 
-    public UserService() {
-        // Dummy initial data moved from LaundryService
-        users.put("u1", new User("u1", "Alice", "alice@example.com"));
-        users.put("u2", new User("u2", "Bob", "bob@example.com"));
+    @Autowired
+    public UserService(UserRepository userRepository) {
+        this.userRepository = userRepository;
     }
 
     public User createUser(User user) {
-        if (user.getId() == null) {
-            user.setId(UUID.randomUUID().toString());
-        }
-        users.put(user.getId(), user);
-        return user;
+        // save() saves in the DB and returns the user with new ID
+        return userRepository.save(user);
     }
 
+    // Read all users from database
     public List<User> getAllUsers() {
-        return new ArrayList<>(users.values());
+        return userRepository.findAll();
     }
 
-    public User getUser(String id) {
-        return users.get(id);
+    // Read one specific user
+    public User getUser(Long id) {
+        return userRepository.findById(id).orElse(null);
     }
 }

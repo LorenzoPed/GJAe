@@ -1,4 +1,4 @@
 package com.laundry.app.dto;
 
-public record UserResponse(String id, String name, String email) {
+public record UserResponse(Long id, String name, String email) {
 }

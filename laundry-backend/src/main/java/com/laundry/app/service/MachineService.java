@@ -1,35 +1,53 @@
 package com.laundry.app.service;
 
 import com.laundry.app.model.Machine;
+import com.laundry.app.repository.MachineRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.Collection;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.List;
 
 @Service
 public class MachineService {
 
-    private final Map<String, Machine> machines = new ConcurrentHashMap<>();
+    private final MachineRepository machineRepository;
 
-    public MachineService() {
-        // Dummy initial data moved from LaundryService
-        machines.put("m1", new Machine("m1", "washer", true));
-        machines.put("m2", new Machine("m2", "dryer", false));
+    @Autowired
+    public MachineService(MachineRepository machineRepository) {
+        this.machineRepository = machineRepository;
     }
 
-    public Collection<Machine> getAllMachines() {
-        return machines.values();
+    // Ritorna tutte le macchine
+    public List<Machine> getAllMachines() {
+        return machineRepository.findAll();
     }
 
-    public Machine getMachine(String id) {
-        return machines.get(id);
+    // Trova una macchina per ID (lancia eccezione se non esiste)
+    public Machine getMachineById(Long id) {
+        return machineRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Machine not found with id: " + id));
     }
 
-    public void updateMachineAvailability(String id, boolean available) {
-        Machine machine = machines.get(id);
-        if (machine != null) {
-            machine.setAvailable(available);
+    // Crea una nuova macchina
+    public Machine createMachine(Machine machine) {
+        return machineRepository.save(machine);
+    }
+
+    // Aggiorna nome e stato (enabled)
+    public Machine updateMachine(Long id, Machine machineDetails) {
+        Machine machine = getMachineById(id); // Riutilizza il metodo sopra per il check esistenza
+
+        machine.setName(machineDetails.getName());
+        machine.setEnabled(machineDetails.isEnabled()); // Qui usiamo il tuo campo 'enabled'
+
+        return machineRepository.save(machine);
+    }
+
+    // Cancella una macchina
+    public void deleteMachine(Long id) {
+        if (!machineRepository.existsById(id)) {
+            throw new RuntimeException("Machine not found with id: " + id);
         }
+        machineRepository.deleteById(id);
     }
 }

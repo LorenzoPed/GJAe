@@ -40,4 +40,13 @@ public class UserController {
                 .map(userMapper::toResponse)
                 .collect(Collectors.toList());
     }
+
+    @GetMapping("/{id}")
+    public org.springframework.http.ResponseEntity<UserResponse> getUserById(@PathVariable Long id) {
+        User user = userService.getUser(id);
+        if (user == null) {
+            return org.springframework.http.ResponseEntity.notFound().build(); // Restituisce 404 se non esiste
+        }
+        return org.springframework.http.ResponseEntity.ok(userMapper.toResponse(user)); // Restituisce 200 OK con l'utente
+    }
 }
