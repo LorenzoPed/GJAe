@@ -11,12 +11,13 @@ public class Machine {
     private Long id; // Meglio Long autogenerato
 
     private String name; // Es: "Lavatrice 1", "Moka Machine"
-    private String type; // Es: "WASHER", "DRYER"
+    @Enumerated(EnumType.STRING) // Salva "WASHER" o "DRYER" nel DB come testo
+    private MachineType type;
     private boolean enabled; // Meglio chiamarlo 'enabled' (funzionante/rotta)
 
     public Machine() {}
 
-    public Machine(String name, String type, boolean enabled) {
+    public Machine(String name, MachineType type, boolean enabled) {
         this.name = name;
         this.type = type;
         this.enabled = enabled;
@@ -29,8 +30,8 @@ public class Machine {
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
 
-    public String getType() { return type; }
-    public void setType(String type) { this.type = type; }
+    public MachineType getType() { return type; }
+    public void setType(MachineType type) { this.type = type; }
 
     public boolean isEnabled() { return enabled; }
     public void setEnabled(boolean enabled) { this.enabled = enabled; }

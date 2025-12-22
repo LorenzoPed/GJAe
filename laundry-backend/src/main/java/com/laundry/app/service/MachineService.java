@@ -39,6 +39,7 @@ public class MachineService {
 
         machine.setName(machineDetails.getName());
         machine.setEnabled(machineDetails.isEnabled()); // Qui usiamo il tuo campo 'enabled'
+        machine.setType(machineDetails.getType());
 
         return machineRepository.save(machine);
     }

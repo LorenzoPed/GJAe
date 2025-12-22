@@ -24,4 +24,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     boolean existsOverlap(@Param("machineId") Long machineId,
                           @Param("start") LocalDateTime start,
                           @Param("end") LocalDateTime end);
+
+    @Query("SELECT b FROM Booking b WHERE b.startTime >= :start AND b.endTime <= :end")
+    List<Booking> findByDateRange(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 }

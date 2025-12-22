@@ -2,6 +2,7 @@ package com.laundry.app.laundry_backend.service;
 import com.laundry.app.model.Booking;
 import com.laundry.app.model.Machine;
 import com.laundry.app.model.User;
+import com.laundry.app.model.MachineType;
 import com.laundry.app.service.BookingService;
 import com.laundry.app.repository.BookingRepository;
 import com.laundry.app.repository.MachineRepository;
@@ -49,6 +50,7 @@ class BookingServiceTest {
         mockMachine = new Machine();
         mockMachine.setId(1L);
         mockMachine.setName("Washing Machine A");
+        mockMachine.setType(MachineType.WASHER);
     }
 
     @Test

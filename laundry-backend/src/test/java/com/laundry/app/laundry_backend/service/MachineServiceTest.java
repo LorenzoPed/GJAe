@@ -1,6 +1,7 @@
 package com.laundry.app.laundry_backend.service;
 
 import com.laundry.app.model.Machine;
+import com.laundry.app.model.MachineType; // Assicurati di importare l'ENUM
 import com.laundry.app.repository.MachineRepository;
 import com.laundry.app.service.MachineService;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,15 +35,18 @@ class MachineServiceTest {
         mockMachine = new Machine();
         mockMachine.setId(1L);
         mockMachine.setName("Lavatrice A");
-        mockMachine.setEnabled(true); // Impostiamo enabled a true
+        mockMachine.setEnabled(true);
+        // NUOVO: Impostiamo il tipo iniziale
+        mockMachine.setType(MachineType.WASHER);
     }
 
     @Test
     void getAllMachines_Success() {
         Machine machine2 = new Machine();
         machine2.setId(2L);
-        machine2.setName("Lavatrice B");
-        machine2.setEnabled(false);
+        machine2.setName("Asciugatrice B");
+        machine2.setEnabled(true);
+        machine2.setType(MachineType.DRYER); // Tipo diverso
 
         when(machineRepository.findAll()).thenReturn(Arrays.asList(mockMachine, machine2));
 
@@ -60,7 +64,7 @@ class MachineServiceTest {
 
         assertNotNull(result);
         assertEquals("Lavatrice A", result.getName());
-        assertTrue(result.isEnabled()); // Verifichiamo che sia enabled
+        assertEquals(MachineType.WASHER, result.getType()); // Verifica tipo
     }
 
     @Test
@@ -81,7 +85,7 @@ class MachineServiceTest {
         Machine result = machineService.createMachine(mockMachine);
 
         assertNotNull(result);
-        assertEquals("Lavatrice A", result.getName());
+        assertEquals(MachineType.WASHER, result.getType());
         verify(machineRepository).save(any(Machine.class));
     }
 
@@ -90,17 +94,24 @@ class MachineServiceTest {
         // Arrange
         Machine updatedDetails = new Machine();
         updatedDetails.setName("Lavatrice A - Updated");
-
         updatedDetails.setEnabled(false);
+        // NUOVO: Proviamo a cambiare anche il tipo (es. era sbagliato) o verifichiamo che rimanga
+        updatedDetails.setType(MachineType.DRYER);
 
         when(machineRepository.findById(1L)).thenReturn(Optional.of(mockMachine));
-        when(machineRepository.save(any(Machine.class))).thenReturn(updatedDetails);
+
+        // Mockiamo il save per ritornare l'oggetto aggiornato
+        when(machineRepository.save(any(Machine.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         // Act
         Machine result = machineService.updateMachine(1L, updatedDetails);
 
         // Assert
         assertNotNull(result);
+        assertEquals("Lavatrice A - Updated", result.getName());
+        assertFalse(result.isEnabled());
+        assertEquals(MachineType.DRYER, result.getType()); // Verifichiamo il cambio tipo
+
         verify(machineRepository).save(any(Machine.class));
     }
 
