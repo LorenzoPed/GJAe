@@ -25,9 +25,30 @@ public class BookingController {
         return ResponseEntity.ok(newBooking);
     }
 
-    // Get all bookings (Admin only ideally, but public for now)
+    // Get all bookings (Admin only)
     @GetMapping
-    public ResponseEntity<List<Booking>> getAllBookings() {
-        return ResponseEntity.ok(bookingService.getAllBookings());
+    public ResponseEntity<List<Booking>> getAllBookings(
+            @RequestParam(required = false) Long userId,
+            @RequestParam(required = false) Long machineId
+    ) {
+        return ResponseEntity.ok(bookingService.getBookings(userId, machineId));
+    }
+
+    // Endpoint: GET /api/bookings/my
+    @GetMapping("/my")
+    public ResponseEntity<List<Booking>> getMyBookings() {
+        return ResponseEntity.ok(bookingService.getMyBookings());
+    }
+
+    // Endpoint: DELETE /api/bookings/{id}
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> cancelBooking(@PathVariable Long id) {
+        try {
+            bookingService.cancelBooking(id);
+            return ResponseEntity.ok("Booking cancelled successfully.");
+        } catch (RuntimeException e) {
+            // Return 403 or 400 depending on the error, for now 400 is fine for simplicity
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 }

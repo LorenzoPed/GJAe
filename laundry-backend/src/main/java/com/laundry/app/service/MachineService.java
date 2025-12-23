@@ -17,34 +17,34 @@ public class MachineService {
         this.machineRepository = machineRepository;
     }
 
-    // Ritorna tutte le macchine
+    //Returns all machines
     public List<Machine> getAllMachines() {
         return machineRepository.findAll();
     }
 
-    // Trova una macchina per ID (lancia eccezione se non esiste)
+    // Find machine by ID
     public Machine getMachineById(Long id) {
         return machineRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Machine not found with id: " + id));
     }
 
-    // Crea una nuova macchina
+    // Create new machine
     public Machine createMachine(Machine machine) {
         return machineRepository.save(machine);
     }
 
-    // Aggiorna nome e stato (enabled)
+    // Update name and status (enabled)
     public Machine updateMachine(Long id, Machine machineDetails) {
-        Machine machine = getMachineById(id); // Riutilizza il metodo sopra per il check esistenza
+        Machine machine = getMachineById(id);
 
         machine.setName(machineDetails.getName());
-        machine.setEnabled(machineDetails.isEnabled()); // Qui usiamo il tuo campo 'enabled'
+        machine.setEnabled(machineDetails.isEnabled());
         machine.setType(machineDetails.getType());
 
         return machineRepository.save(machine);
     }
 
-    // Cancella una macchina
+    // Delete a Machine
     public void deleteMachine(Long id) {
         if (!machineRepository.existsById(id)) {
             throw new RuntimeException("Machine not found with id: " + id);

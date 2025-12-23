@@ -45,17 +45,19 @@ public class Booking {
     // --- GETTERS & SETTERS ---
 
     public Long getId() { return id; }
-    // (Other getters/setters for time/status/machine remain the same...)
+
     public LocalDateTime getStartTime() { return startTime; }
     public void setStartTime(LocalDateTime startTime) { this.startTime = startTime; }
+
     public LocalDateTime getEndTime() { return endTime; }
     public void setEndTime(LocalDateTime endTime) { this.endTime = endTime; }
+
     public BookingStatus getStatus() { return status; }
     public void setStatus(BookingStatus status) { this.status = status; }
+
     public Machine getMachine() { return machine; }
     public void setMachine(Machine machine) { this.machine = machine; }
 
-    // New Getter/Setter for User
     public User getUser() { return user; }
     public void setUser(User user) { this.user = user; }
 }

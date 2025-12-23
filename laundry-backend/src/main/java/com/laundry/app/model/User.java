@@ -3,20 +3,19 @@ package com.laundry.app.model;
 import jakarta.persistence.*; // Importa tutto il necessario per il database
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-@Entity // <--- 1. Questa è la "magia" che crea la tabella
-@Table(name = "users") // <--- 2. Meglio chiamare la tabella "users" perché "user" è una parola riservata di SQL
+@Entity // Marks this class as a JPA entity representing a table in the database
+@Table(name = "users") // Specifies the table name as "users" to avoid conflicts with the SQL reserved keyword 'USER'
 public class User {
 
-    @Id // <--- 3. Dice che questo è l'ID univoco
-    @GeneratedValue(strategy = GenerationType.IDENTITY) // <--- 4. Dice a MySQL di creare l'ID da solo (1, 2, 3...)
+    @Id // Denotes the primary key of this entity
+    @GeneratedValue(strategy = GenerationType.IDENTITY) // Configures the ID to be auto-incremented by the database (1, 2, 3...)
     private Long id;
 
     private String name;
 
     private String email;
 
-    // 'unique = true' to avoid users with same name
-    @Column(unique = true)
+    @Column(unique = true, nullable = false) // Enforces uniqueness in the database to prevent duplicate usernames
     private String username;
 
     @JsonIgnore

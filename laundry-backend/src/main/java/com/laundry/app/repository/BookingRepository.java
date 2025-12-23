@@ -13,10 +13,13 @@ import java.util.List;
 public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     // Custom query to find all bookings belonging to a specific user
-    List<Booking> findByUserId(Long userId);
+    List<Booking> findByUser_Username(String username);
 
     // Custom query to find all bookings for a specific machine
     List<Booking> findByMachineId(Long machineId);
+
+    //Custom query to find all bookings for a specific user
+    List<Booking> findByUserId(Long userId);
 
     @Query("SELECT COUNT(b) > 0 FROM Booking b " +
             "WHERE b.machine.id = :machineId " +

@@ -8,12 +8,12 @@ public class Machine {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id; // Meglio Long autogenerato
+    private Long id;
 
-    private String name; // Es: "Lavatrice 1", "Moka Machine"
-    @Enumerated(EnumType.STRING) // Salva "WASHER" o "DRYER" nel DB come testo
+    private String name;
+    @Enumerated(EnumType.STRING)
     private MachineType type;
-    private boolean enabled; // Meglio chiamarlo 'enabled' (funzionante/rotta)
+    private boolean enabled;
 
     public Machine() {}
 
