@@ -1,6 +1,7 @@
 package com.laundry.app.model;
 
 import jakarta.persistence.*; // Importa tutto il necessario per il database
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity // <--- 1. Questa è la "magia" che crea la tabella
 @Table(name = "users") // <--- 2. Meglio chiamare la tabella "users" perché "user" è una parola riservata di SQL
@@ -18,6 +19,8 @@ public class User {
     @Column(unique = true)
     private String username;
 
+    @JsonIgnore
+    @Column(nullable = false)
     private String password;
 
     @Enumerated(EnumType.STRING)

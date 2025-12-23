@@ -27,4 +27,5 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     @Query("SELECT b FROM Booking b WHERE b.startTime >= :start AND b.endTime <= :end")
     List<Booking> findByDateRange(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+    
 }

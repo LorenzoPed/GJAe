@@ -16,3 +16,10 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQLDialect
+
+application:
+  security:
+    jwt:
+      # fixed hardcoded key
+      secret-key: 655368566D597133743677397A24432646294A404E635266556A586E32723575
+      expiration: 86400000 # 24 hours

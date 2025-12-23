@@ -30,18 +30,28 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                // 1. Disable CSRF (not needed for stateless APIs)
+                // 1. Disable CSRF
                 .csrf(AbstractHttpConfigurer::disable)
 
                 // 2. Set permissions on endpoints
                 .authorizeHttpRequests(auth -> auth
-                        // Allow public access to auth endpoints (Login/Register)
                         .requestMatchers("/api/auth/**").permitAll()
-                        // Any other request requires authentication
+                        .requestMatchers("/api/admin/**").hasRole("MANAGER")
                         .anyRequest().authenticated()
                 )
 
-                // 3. Stateless Session Management (No Cookies!)
+                // --- NEW PART: FIX FOR 401 ERROR ---
+                // This tells Spring to return 401 Unauthorized instead of 403 Forbidden
+                // when an anonymous user tries to access a protected resource.
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            response.setStatus(jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED); // 401
+                            response.getWriter().write("Unauthorized: You need to log in");
+                        })
+                )
+                // -----------------------------------
+
+                // 3. Stateless Session Management
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
@@ -49,7 +59,7 @@ public class SecurityConfig {
                 // 4. Set the authentication provider
                 .authenticationProvider(authenticationProvider())
 
-                // 5. Add our JWT Filter before the standard Username/Password filter
+                // 5. Add our JWT Filter
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

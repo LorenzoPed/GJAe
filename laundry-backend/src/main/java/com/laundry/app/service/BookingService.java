@@ -1,53 +1,78 @@
 package com.laundry.app.service;
 
+import com.laundry.app.dto.BookingRequest;
 import com.laundry.app.model.Booking;
 import com.laundry.app.model.Machine;
+import com.laundry.app.model.BookingStatus;
 import com.laundry.app.model.User;
 import com.laundry.app.repository.BookingRepository;
 import com.laundry.app.repository.MachineRepository;
 import com.laundry.app.repository.UserRepository;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
-import java.time.LocalDateTime;
+
+import java.util.List;
 
 @Service
 public class BookingService {
 
     private final BookingRepository bookingRepository;
-    private final UserRepository userRepository;
     private final MachineRepository machineRepository;
+    private final UserRepository userRepository;
 
-    // COSTRUTTORE MANUALE (Sostituisce @RequiredArgsConstructor)
-    public BookingService(BookingRepository bookingRepository,
-                          UserRepository userRepository,
-                          MachineRepository machineRepository) {
+    public BookingService(BookingRepository bookingRepository, MachineRepository machineRepository, UserRepository userRepository) {
         this.bookingRepository = bookingRepository;
-        this.userRepository = userRepository;
         this.machineRepository = machineRepository;
+        this.userRepository = userRepository;
     }
 
-    public Booking createBooking(Long userId, Long machineId, LocalDateTime start, LocalDateTime end) {
+    // Create a new booking linked to the currently logged-in user
+    public Booking createBooking(BookingRequest request) {
 
-        if (!end.isAfter(start)) {
-            throw new IllegalArgumentException("La data di fine deve essere successiva alla data di inizio.");
+        // 0. BASIC VALIDATION: Check if dates make sense
+        if (request.getStartTime().isAfter(request.getEndTime())) {
+            throw new IllegalArgumentException("Start time must be before end time");
+        }
+        if (request.getStartTime().isBefore(java.time.LocalDateTime.now())) {
+            throw new IllegalArgumentException("Cannot book in the past");
         }
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("Utente non trovato con id: " + userId));
+        // 1. Get the username from the Security Context
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
 
-        Machine machine = machineRepository.findById(machineId)
-                .orElseThrow(() -> new RuntimeException("Macchina non trovata con id: " + machineId));
+        // 2. Find the full User entity from DB
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
-        boolean isOccupied = bookingRepository.existsOverlap(machineId, start, end);
+        // 3. Find the Machine
+        Machine machine = machineRepository.findById(request.getMachineId())
+                .orElseThrow(() -> new RuntimeException("Machine not found"));
+
+        // 4. CRITICAL CHECK: Ensure the machine is not already booked
+        boolean isOccupied = bookingRepository.existsOverlap(
+                machine.getId(),
+                request.getStartTime(),
+                request.getEndTime()
+        );
+
         if (isOccupied) {
-            throw new RuntimeException("La macchina è già prenotata in questo intervallo di tempo.");
+            throw new IllegalStateException("The machine is already booked for this time slot.");
         }
 
+        // 5. Create the Booking object
         Booking booking = new Booking();
-        booking.setUser(user);
         booking.setMachine(machine);
-        booking.setStartTime(start);
-        booking.setEndTime(end);
+        booking.setUser(user);
+        booking.setStartTime(request.getStartTime());
+        booking.setEndTime(request.getEndTime());
+        booking.setStatus(BookingStatus.CONFIRMED);
 
+        // 6. Save to DB
         return bookingRepository.save(booking);
+    }
+
+    public List<Booking> getAllBookings() {
+        return bookingRepository.findAll();
     }
 }

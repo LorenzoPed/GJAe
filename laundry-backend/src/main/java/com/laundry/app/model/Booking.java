@@ -11,39 +11,51 @@ public class Booking {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private LocalDateTime startTime; // Data e ora inizio lavaggio
-    private LocalDateTime endTime;   // Data e ora fine previsti
+    @Column(nullable = false)
+    private LocalDateTime startTime;
+
+    @Column(nullable = false)
+    private LocalDateTime endTime;
 
     @Enumerated(EnumType.STRING)
-    private BookingStatus status;
+    private BookingStatus status; // PENDING, CONFIRMED, CANCELLED
 
-    @ManyToOne // Many bookings-> One User
-    @JoinColumn(name = "user_id", nullable = false) // Creates column user_id in the DB
-    private User user;
-
-    @ManyToOne // Many bookings -> One Machine
+    // RELATIONSHIP: Many bookings can belong to One machine
+    @ManyToOne
     @JoinColumn(name = "machine_id", nullable = false)
     private Machine machine;
 
+    // --- NEW CHANGE: Link to User ---
+    // Many bookings can belong to One user
+    @ManyToOne
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+
+    public Booking() {}
+
+    // Updated Constructor
+    public Booking(LocalDateTime startTime, LocalDateTime endTime, BookingStatus status, Machine machine, User user) {
+        this.startTime = startTime;
+        this.endTime = endTime;
+        this.status = status;
+        this.machine = machine;
+        this.user = user;
+    }
+
+    // --- GETTERS & SETTERS ---
+
+    public Long getId() { return id; }
+    // (Other getters/setters for time/status/machine remain the same...)
+    public LocalDateTime getStartTime() { return startTime; }
+    public void setStartTime(LocalDateTime startTime) { this.startTime = startTime; }
+    public LocalDateTime getEndTime() { return endTime; }
+    public void setEndTime(LocalDateTime endTime) { this.endTime = endTime; }
+    public BookingStatus getStatus() { return status; }
+    public void setStatus(BookingStatus status) { this.status = status; }
     public Machine getMachine() { return machine; }
     public void setMachine(Machine machine) { this.machine = machine; }
 
-    // Empty constructor
-    public Booking() {}
-
-    // Getter e Setter
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-
-    public LocalDateTime getStartTime() { return startTime; }
-    public void setStartTime(LocalDateTime startTime) { this.startTime = startTime; }
-
-    public LocalDateTime getEndTime() { return endTime; }
-    public void setEndTime(LocalDateTime endTime) { this.endTime = endTime; }
-
-    public BookingStatus getStatus() { return status; }
-    public void setStatus(BookingStatus status) { this.status = status; }
-
+    // New Getter/Setter for User
     public User getUser() { return user; }
     public void setUser(User user) { this.user = user; }
 }
