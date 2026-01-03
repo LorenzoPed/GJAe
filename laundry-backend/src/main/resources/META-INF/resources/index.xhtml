@@ -1,58 +1,14 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:h="http://xmlns.jcp.org/jsf/html"
-      xmlns:p="http://primefaces.org/ui">
+      xmlns:f="http://xmlns.jcp.org/jsf/core">
 
 <h:head>
-    <title>Laundry Dashboard</title>
+    <title>Redirecting...</title>
+    <f:event type="preRenderView" listener="#{navigationView.redirectBasedOnRole}"/>
 </h:head>
 
 <h:body>
-    <div class="card">
-        <h:form>
-            <p:menubar>
-                <p:menuitem value="Home" icon="pi pi-home" url="/index.xhtml"/>
-                <p:menuitem value="Logout" url="/logout" icon="pi pi-power-off"/>
-            </p:menubar>
-        </h:form>
-
-        <h1 style="text-align:center; margin-top: 20px;">Laundry Status</h1>
-
-        <div style="padding: 20px;">
-            <p:dataTable var="macchina" value="#{machineView.machines}" stripedRows="true">
-                <p:column headerText="ID">
-                    <h:outputText value="#{macchina.id}" />
-                </p:column>
-
-                <p:column headerText="Name">
-                    <h:outputText value="#{macchina.name}" style="font-weight: bold;"/>
-                </p:column>
-
-                <p:column headerText="Type">
-                    <h:outputText value="#{macchina.type}" />
-                </p:column>
-
-                <p:column headerText="Active">
-                    <p:tag styleClass="mr-2" severity="#{macchina.enabled ? 'success' : 'danger'}"
-                           value="#{macchina.enabled ? 'Yes' : 'No'}"/>
-                </p:column>
-
-                <!-- NUOVA COLONNA: Visibile solo al MANAGER -->
-                <p:column headerText="Actions" rendered="#{request.isUserInRole('MANAGER')}">
-                    <!-- Pulsante Modifica (giallo/flat) -->
-                    <p:commandButton icon="pi pi-pencil"
-                                     styleClass="rounded-button ui-button-flat ui-button-warning"
-                                     title="Edit"
-                                     style="margin-right: 5px;"/>
-
-                    <!-- Pulsante Elimina (rosso/flat) -->
-                    <p:commandButton icon="pi pi-trash"
-                                     styleClass="rounded-button ui-button-danger ui-button-flat"
-                                     title="Delete"/>
-                </p:column>
-
-            </p:dataTable>
-        </div>
-    </div>
+    <p>Redirecting...</p>
 </h:body>
 </html>

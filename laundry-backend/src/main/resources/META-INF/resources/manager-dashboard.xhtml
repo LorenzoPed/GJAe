@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:f="http://xmlns.jcp.org/jsf/core">
+
+<h:head>
+    <title>Manager Dashboard</title>
+</h:head>
+
+<h:body>
+    <div class="card">
+        <!-- Menu Bar -->
+        <h:form>
+            <p:menubar>
+                <p:menuitem value="Manager Dashboard" icon="pi pi-home" url="/manager-dashboard.xhtml"/>
+                <p:menuitem value="My Bookings" icon="pi pi-calendar" url="/user-booking.xhtml"/>
+                <p:menuitem value="Logout" url="/logout" icon="pi pi-power-off"/>
+            </p:menubar>
+        </h:form>
+
+        <h1 style="text-align:center; margin-top: 20px;">🔧 Manager Dashboard</h1>
+
+        <div style="padding: 20px;">
+
+            <!-- SECTION 1: ALL MACHINES -->
+            <h:form id="machinesForm">
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 30px;">
+                    <h2 style="margin-top: 0;">🧺 Laundry Machines</h2>
+
+                    <p:dataTable var="machine"
+                                 value="#{machineView.machines}"
+                                 stripedRows="true"
+                                 style="margin-top: 15px;">
+
+                        <p:column headerText="ID" style="width: 60px;">
+                            <h:outputText value="#{machine.id}"/>
+                        </p:column>
+
+                        <p:column headerText="Name">
+                            <h:outputText value="#{machine.name}" style="font-weight: bold; font-size: 1.1em;"/>
+                        </p:column>
+
+                        <p:column headerText="Type" style="width: 120px;">
+                            <p:tag value="#{machine.type}"
+                                   severity="#{machine.type == 'WASHER' ? 'info' : 'warning'}"
+                                   icon="#{machine.type == 'WASHER' ? 'pi pi-replay' : 'pi pi-sun'}"/>
+                        </p:column>
+
+                        <p:column headerText="Status" style="width: 120px;">
+                            <p:tag severity="#{machine.enabled ? 'success' : 'danger'}"
+                                   value="#{machine.enabled ? 'Active' : 'Disabled'}"
+                                   icon="#{machine.enabled ? 'pi pi-check-circle' : 'pi pi-times-circle'}"/>
+                        </p:column>
+
+                        <p:column headerText="Actions" style="width: 150px;">
+                            <p:commandButton icon="pi pi-pencil"
+                                             styleClass="rounded-button ui-button-flat ui-button-warning"
+                                             title="Edit Machine"
+                                             style="margin-right: 5px;"/>
+
+                            <p:commandButton icon="pi pi-trash"
+                                             styleClass="rounded-button ui-button-danger ui-button-flat"
+                                             title="Delete Machine"/>
+                        </p:column>
+                    </p:dataTable>
+                </div>
+            </h:form>
+
+            <!-- SECTION 2: ALL BOOKINGS WITH FILTERING -->
+            <h:form id="bookingsForm">
+                <div style="background: #fff; padding: 15px; border-radius: 8px; border: 2px solid #e0e0e0;">
+                    <h2 style="margin-top: 0;">📅 All Bookings</h2>
+
+                    <p:dataTable var="booking"
+                                 value="#{bookingView.allBookings}"
+                                 stripedRows="true"
+                                 paginator="true"
+                                 rows="10"
+                                 emptyMessage="No bookings found"
+                                 filteredValue="#{bookingView.filteredBookings}"
+                                 style="margin-top: 15px;">
+
+                        <p:column headerText="ID" sortBy="#{booking.id}" style="width: 60px;">
+                            <h:outputText value="#{booking.id}"/>
+                        </p:column>
+
+                        <p:column headerText="User"
+                                  sortBy="#{booking.user.username}"
+                                  filterBy="#{booking.user.username}"
+                                  filterMatchMode="contains">
+                            <h:outputText value="#{booking.user.username}"
+                                          style="font-weight: bold; color: #2196F3;"/>
+                        </p:column>
+
+                        <p:column headerText="Machine"
+                                  sortBy="#{booking.machine.name}"
+                                  filterBy="#{booking.machine.name}"
+                                  filterMatchMode="contains">
+                            <h:outputText value="#{booking.machine.name}" style="font-weight: bold;"/>
+                            <br/>
+                            <p:tag value="#{booking.machine.type}"
+                                   severity="#{booking.machine.type == 'WASHER' ? 'info' : 'warning'}"
+                                   style="margin-top: 5px;"/>
+                        </p:column>
+
+                        <p:column headerText="Start Time" sortBy="#{booking.startTime}" style="width: 150px;">
+                            <h:outputText value="#{booking.startTime}" style="color: #4CAF50; font-weight: 500;">
+                                <f:convertDateTime type="localDateTime" pattern="dd/MM/yyyy HH:mm"/>
+                            </h:outputText>
+                        </p:column>
+
+                        <p:column headerText="End Time" sortBy="#{booking.endTime}" style="width: 150px;">
+                            <h:outputText value="#{booking.endTime}" style="color: #FF5722; font-weight: 500;">
+                                <f:convertDateTime type="localDateTime" pattern="dd/MM/yyyy HH:mm"/>
+                            </h:outputText>
+                        </p:column>
+
+                        <p:column headerText="Status"
+                                  filterBy="#{booking.status}"
+                                  filterMatchMode="equals"
+                                  style="width: 130px;">
+                            <f:facet name="filter">
+                                <p:selectOneMenu onchange="PF('bookingsTable').filter()">
+                                    <f:selectItem itemLabel="All" itemValue="#{null}" noSelectionOption="true"/>
+                                    <f:selectItem itemLabel="CONFIRMED" itemValue="CONFIRMED"/>
+                                    <f:selectItem itemLabel="PENDING" itemValue="PENDING"/>
+                                    <f:selectItem itemLabel="COMPLETED" itemValue="COMPLETED"/>
+                                    <f:selectItem itemLabel="CANCELLED" itemValue="CANCELLED"/>
+                                </p:selectOneMenu>
+                            </f:facet>
+
+                            <p:tag severity="#{booking.status == 'CONFIRMED' ? 'success' : (booking.status == 'COMPLETED' ? 'info' : 'warning')}"
+                                   value="#{booking.status}"
+                                   style="font-size: 0.9em;"/>
+                        </p:column>
+
+                        <p:column headerText="Actions" style="width: 100px;">
+                            <p:commandButton icon="pi pi-times"
+                                             styleClass="rounded-button ui-button-danger ui-button-flat"
+                                             action="#{bookingView.cancelBooking(booking.id)}"
+                                             update="@form"
+                                             title="Cancel Booking"
+                                             disabled="#{booking.status == 'CANCELLED' or booking.status == 'COMPLETED'}">
+                                <p:confirm header="Confirm Cancellation"
+                                           message="Cancel booking for #{booking.user.username}?"
+                                           icon="pi pi-exclamation-triangle"/>
+                            </p:commandButton>
+                        </p:column>
+                    </p:dataTable>
+
+                    <p:confirmDialog global="true" showEffect="fade">
+                        <p:commandButton value="Yes" type="button" styleClass="ui-confirmdialog-yes" icon="pi pi-check"/>
+                        <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no ui-button-secondary" icon="pi pi-times"/>
+                    </p:confirmDialog>
+                </div>
+            </h:form>
+
+        </div>
+    </div>
+</h:body>
+</html>

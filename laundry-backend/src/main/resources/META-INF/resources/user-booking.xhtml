@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:f="http://xmlns.jcp.org/jsf/core">
+
+<h:head>
+    <title>Book a Machine</title>
+</h:head>
+
+<h:body>
+    <div class="card">
+        <!-- Menu Bar -->
+        <h:form>
+            <p:menubar>
+                <p:menuitem value="Home" icon="pi pi-home" url="/index.xhtml"/>
+                <p:menuitem value="My Bookings" icon="pi pi-calendar" url="/user-booking.xhtml"/>
+                <p:menuitem value="Logout" url="/logout" icon="pi pi-power-off"/>
+            </p:menubar>
+        </h:form>
+
+        <h1 style="text-align:center; margin-top: 20px;">🧺 Book a Machine</h1>
+
+        <!-- Booking Form -->
+        <div style="padding: 20px; max-width: 600px; margin: 0 auto;">
+            <h:form id="bookingForm">
+                <p:messages id="messages" showDetail="true" closable="true"/>
+
+                <div style="margin-bottom: 20px;">
+                    <h3>Select Time Slot</h3>
+                    <p style="color: #666;">The system will automatically assign an available machine</p>
+                </div>
+
+                <div class="field" style="margin-bottom: 20px;">
+                    <p:outputLabel for="startTime" value="Start Time"/>
+                    <p:calendar id="startTime"
+                                value="#{bookingView.startTime}"
+                                pattern="dd/MM/yyyy HH:mm"
+                                showTime="true"
+                                stepMinute="30"
+                                required="true"
+                                style="width: 100%;"/>
+                </div>
+
+                <div class="field" style="margin-bottom: 30px;">
+                    <p:outputLabel for="endTime" value="End Time"/>
+                    <p:calendar id="endTime"
+                                value="#{bookingView.endTime}"
+                                pattern="dd/MM/yyyy HH:mm"
+                                showTime="true"
+                                stepMinute="30"
+                                required="true"
+                                style="width: 100%;"/>
+                </div>
+
+                <p:commandButton value="Create Booking"
+                                 icon="pi pi-check"
+                                 action="#{bookingView.createBooking}"
+                                 update="@form :myBookingsForm:myBookingsTable"
+                                 styleClass="ui-button-success"
+                                 style="width: 100%;"/>
+            </h:form>
+        </div>
+
+        <!-- My Bookings Table -->
+        <div style="padding: 20px;">
+            <h2>My Bookings</h2>
+            <h:form id="myBookingsForm">
+                <p:dataTable id="myBookingsTable"
+                             var="booking"
+                             value="#{bookingView.myBookings}"
+                             stripedRows="true"
+                             emptyMessage="No bookings found">
+
+                    <p:column headerText="ID">
+                        <h:outputText value="#{booking.id}"/>
+                    </p:column>
+
+                    <p:column headerText="Machine">
+                        <h:outputText value="#{booking.machine.name}" style="font-weight: bold;"/>
+                    </p:column>
+
+                    <p:column headerText="Type">
+                        <h:outputText value="#{booking.machine.type}"/>
+                    </p:column>
+
+                    <p:column headerText="Start Time">
+                        <h:outputText value="#{booking.startTime}">
+                            <f:convertDateTime type="localDateTime" pattern="dd/MM/yyyy HH:mm"/>
+                        </h:outputText>
+                    </p:column>
+
+                    <p:column headerText="End Time">
+                        <h:outputText value="#{booking.endTime}">
+                            <f:convertDateTime type="localDateTime" pattern="dd/MM/yyyy HH:mm"/>
+                        </h:outputText>
+                    </p:column>
+
+                    <p:column headerText="Status">
+                        <p:tag severity="#{booking.status == 'CONFIRMED' ? 'success' : 'warning'}"
+                               value="#{booking.status}"/>
+                    </p:column>
+
+                    <p:column headerText="Actions">
+                        <p:commandButton icon="pi pi-times"
+                                         styleClass="rounded-button ui-button-danger ui-button-flat"
+                                         action="#{bookingView.cancelBooking(booking.id)}"
+                                         update=":myBookingsForm:myBookingsTable :bookingForm:messages"
+                                         title="Cancel">
+                            <p:confirm header="Confirm"
+                                       message="Are you sure you want to cancel this booking?"
+                                       icon="pi pi-exclamation-triangle"/>
+                        </p:commandButton>
+                    </p:column>
+                </p:dataTable>
+
+                <p:confirmDialog global="true" showEffect="fade">
+                    <p:commandButton value="Yes" type="button" styleClass="ui-confirmdialog-yes" icon="pi pi-check"/>
+                    <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no ui-button-secondary" icon="pi pi-times"/>
+                </p:confirmDialog>
+            </h:form>
+        </div>
+    </div>
+</h:body>
+</html>

@@ -22,13 +22,12 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
-                        // 1. Risorse statiche di JSF (immagini, script, CSS di PrimeFaces)
                         .requestMatchers(new AntPathRequestMatcher("/jakarta.faces.resource/**")).permitAll()
 
-                        // 2. Pagina di login deve essere pubblica
-                        .requestMatchers(new AntPathRequestMatcher("/login.xhtml")).permitAll()
+                        .requestMatchers("/manager-dashboard.xhtml").hasRole("MANAGER")
 
-                        // 3. Tutto il resto richiede autenticazione
+                        .requestMatchers("/user-booking.xhtml").hasRole("USER")
+
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form

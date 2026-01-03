@@ -11,6 +11,7 @@ import com.laundry.app.repository.UserRepository;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -91,11 +92,13 @@ public class BookingService {
     }
 
     // Method to get all bookings (Standard findAll)
+    @Transactional(readOnly = true)
     public List<Booking> getAllBookings() {
         return bookingRepository.findAll();
     }
 
     // Method to get all the bookings of currently logged-in user
+    @Transactional(readOnly = true)
     public List<Booking> getMyBookings() {
         // 1. Get username from token (Security Context)
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
