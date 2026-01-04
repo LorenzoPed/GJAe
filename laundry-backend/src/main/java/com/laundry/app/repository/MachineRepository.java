@@ -1,10 +1,12 @@
 package com.laundry.app.repository;
 
 import com.laundry.app.model.Machine;
+import com.laundry.app.model.MachineType; // <--- Importante
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
+import java.util.List;
 
-@Repository
 public interface MachineRepository extends JpaRepository<Machine, Long> {
-    // Standard CRUD operations are already included (save, findById, etc.)
+
+    List<Machine> findByType(MachineType type);
+    long countByType(MachineType type);
 }

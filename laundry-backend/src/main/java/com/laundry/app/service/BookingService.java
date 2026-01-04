@@ -5,6 +5,7 @@ import com.laundry.app.model.Booking;
 import com.laundry.app.model.BookingStatus; // Assicurati di avere questo Enum, altrimenti usa String "CONFIRMED"
 import com.laundry.app.model.Machine;
 import com.laundry.app.model.User;
+import com.laundry.app.model.MachineType;
 import com.laundry.app.repository.BookingRepository;
 import com.laundry.app.repository.MachineRepository;
 import com.laundry.app.repository.UserRepository;
@@ -35,7 +36,7 @@ public class BookingService {
      */
     public Booking createBooking(BookingRequest request) {
 
-        // 0. BASIC VALIDATION: Check if dates make sense
+        // 0. BASIC VALIDATION
         if (request.getStartTime().isAfter(request.getEndTime())) {
             throw new IllegalArgumentException("Start time must be before end time");
         }
@@ -43,22 +44,23 @@ public class BookingService {
             throw new IllegalArgumentException("Cannot book in the past");
         }
 
-        // 1. Get the username from the Security Context (Token)
+        // 1. Get the username from the Security Context
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
 
-        // 2. Find the full User entity from DB
+        // 2. Find the full User entity
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
-        // 3. AUTO-ASSIGNMENT LOGIC: Find the first available machine
-        // We fetch all machines and check them one by one.
-        List<Machine> allMachines = machineRepository.findAll();
+        // --- 3. AUTO-ASSIGNMENT LOGIC (UPDATED) ---
+        // Change: Instead of fetching ALL machines, we fetch only the requested type (WASHER/DRYER)
+        List<Machine> candidateMachines = machineRepository.findByType(request.getMachineType());
+
         Machine selectedMachine = null;
 
-        for (Machine machine : allMachines) {
-            // Check 1: Is the machine working? (enabled)
-            // Check 2: Is the machine free at this time? (no overlap)
+        for (Machine machine : candidateMachines) {
+            // Check 1: Is the machine enabled?
             if (machine.isEnabled()) {
+                // Check 2: Is the machine free? (no overlap)
                 boolean isOccupied = bookingRepository.existsOverlap(
                         machine.getId(),
                         request.getStartTime(),
@@ -66,25 +68,24 @@ public class BookingService {
                 );
 
                 if (!isOccupied) {
-                    // We found a free machine! Select it and stop searching.
+                    // Found a free machine of the correct type
                     selectedMachine = machine;
                     break;
                 }
             }
         }
 
-        // 4. If selectedMachine is still null, it means everything is full
+        // 4. If selectedMachine is still null, it means no machines of that type are free
         if (selectedMachine == null) {
-            throw new IllegalStateException("No machines available for the selected time slot.");
+            throw new IllegalStateException("No " + request.getMachineType() + " available for the selected time slot.");
         }
 
-        // 5. Create the Booking object with the System-Selected machine
+        // 5. Create the Booking object
         Booking booking = new Booking();
         booking.setMachine(selectedMachine);
         booking.setUser(user);
         booking.setStartTime(request.getStartTime());
         booking.setEndTime(request.getEndTime());
-        // Use Enum if you have it, or string "CONFIRMED" depending on your model
         booking.setStatus(BookingStatus.CONFIRMED);
 
         // 6. Save to DB
@@ -131,6 +132,15 @@ public class BookingService {
         bookingRepository.delete(booking);
     }
 
+    // Ritorna TRUE se c'è almeno una macchina libera di quel tipo
+    public boolean isSlotAvailable(MachineType type, LocalDateTime start, LocalDateTime end) {
+        long totalMachines = machineRepository.countByType(type);
+        long activeBookings = bookingRepository.countConflictingBookings(type, start, end);
+
+        // Se le prenotazioni sono meno delle macchine totali, c'è posto!
+        return activeBookings < totalMachines;
+    }
+
     // Advanced search method for Manager dashboard (Filter by User or Machine)
     public List<Booking> getBookings(Long userId, Long machineId) {
         if (userId != null) {
@@ -141,4 +151,5 @@ public class BookingService {
             return bookingRepository.findAll();
         }
     }
+
 }

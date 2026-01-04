@@ -23,7 +23,8 @@ public class NavigationView {
         if (isManager) {
             context.getExternalContext().redirect("manager-dashboard.xhtml");
         } else {
-            context.getExternalContext().redirect("user-booking.xhtml");
+            // --- UPDATED: Redirect to the new Calendar Home ---
+            context.getExternalContext().redirect("home.xhtml");
         }
     }
 }

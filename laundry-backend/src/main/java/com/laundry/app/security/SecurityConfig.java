@@ -11,9 +11,10 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 @EnableWebSecurity
 public class SecurityConfig {
 
+    // Note: If you don't explicitly use userDetailsService here, Spring Boot
+    // will still find the @Bean from your service class automatically.
     private final CustomUserDetailsService userDetailsService;
 
-    // Iniettiamo solo il service utente, niente filtri JWT
     public SecurityConfig(CustomUserDetailsService userDetailsService) {
         this.userDetailsService = userDetailsService;
     }
@@ -22,30 +23,45 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(new AntPathRequestMatcher("/jakarta.faces.resource/**")).permitAll()
+                        // 1. Allow static resources (CSS, JS, Images) for PrimeFaces/JoinFaces
+                        // It is safer to include javax.faces and resources to avoid login page styling issues
+                        .requestMatchers(
+                                new AntPathRequestMatcher("/javax.faces.resource/**"),
+                                new AntPathRequestMatcher("/jakarta.faces.resource/**"),
+                                new AntPathRequestMatcher("/resources/**")
+                        ).permitAll()
 
+                        // 2. Allow Login Page
+                        .requestMatchers("/login.xhtml", "/login").permitAll()
+
+                        // 3. Manager Pages
                         .requestMatchers("/manager-dashboard.xhtml").hasRole("MANAGER")
 
-                        .requestMatchers("/user-booking.xhtml").hasRole("USER")
+                        // 4. UPDATED: User Pages (Replaces user-booking.xhtml)
+                        // We allow both USER and MANAGER to see the calendar/home if needed,
+                        // or restrict to USER only.
+                        .requestMatchers("/home.xhtml", "/my-bookings.xhtml").authenticated()
 
+                        // 5. Catch-all for any other request
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
-                        .loginPage("/login.xhtml") // Pagina custom JSF
-                        .defaultSuccessUrl("/index.xhtml", true) // Redirect forzato alla dashboard dopo login
-                        .failureUrl("/login.xhtml?error=true") // Redirect in caso di errore
+                        .loginPage("/login.xhtml")
+                        // We keep index.xhtml as the landing page.
+                        // Ensure your NavigationView redirects to 'home.xhtml' instead of 'user-booking.xhtml'
+                        .defaultSuccessUrl("/index.xhtml", true)
+                        .failureUrl("/login.xhtml?error=true")
                         .permitAll()
                 )
                 .logout(logout -> logout
                         .logoutSuccessUrl("/login.xhtml")
+                        .invalidateHttpSession(true)
+                        .deleteCookies("JSESSIONID")
                         .permitAll()
                 )
-                // Disabilitiamo CSRF per semplicità (JSF lo gestisce internamente in parte)
+                // Disable CSRF for JSF compatibility
                 .csrf(csrf -> csrf.disable());
 
         return http.build();
     }
-
-    // NOTA: PasswordEncoder è già definito in App.java o DataInitializer,
-    // quindi non serve ridefinirlo qui per evitare conflitti di "Bean già esistente".
 }

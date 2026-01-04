@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:f="http://xmlns.jcp.org/jsf/core">
+
+<h:head>
+    <title>Laundry Booking</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f4f9; padding: 20px;}
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        /* Remove border from events */
+        .fc-event { cursor: pointer; border: none; }
+        /* Style for the active menu item to look distinct */
+        .active-menu-item .ui-menuitem-text { color: #333 !important; }
+    </style>
+</h:head>
+
+<h:body>
+    <h:form id="menuForm">
+        <p:menubar style="margin-bottom: 20px;">
+
+            <p:menuitem value="#{request.isUserInRole('MANAGER') ? 'Calendar' : 'Home'}"
+                        icon="pi pi-calendar"
+                        url="/home.xhtml"
+                        disabled="true"
+                        style="font-weight: bold; opacity: 1 !important;"
+                        styleClass="active-menu-item"/>
+
+            <p:menuitem value="My Bookings List"
+                        icon="pi pi-list"
+                        url="/my-bookings.xhtml"/>
+
+            <p:menuitem value="Back to Dashboard"
+                        icon="pi pi-cog"
+                        url="/manager-dashboard.xhtml"
+                        style="font-weight: bold; color: #E91E63;"
+                        rendered="#{request.isUserInRole('MANAGER')}" />
+
+            <p:menuitem value="Logout" url="/logout" icon="pi pi-power-off"/>
+        </p:menubar>
+    </h:form>
+
+    <div class="card">
+        <h2>
+            <h:outputText value="📅 Manage Schedule" rendered="#{request.isUserInRole('MANAGER')}" />
+            <h:outputText value="📅 Select a Date &amp; Time" rendered="#{!request.isUserInRole('MANAGER')}" />
+        </h2>
+
+        <h:form id="scheduleForm">
+            <p:growl id="messages" showDetail="true" />
+
+            <p:schedule id="schedule" value="#{bookingView.eventModel}" widgetVar="myschedule">
+                <p:ajax event="dateSelect" listener="#{bookingView.onDateSelect}"
+                        update=":dialogForm:eventDetails"
+                        oncomplete="PF('eventDialog').show();" />
+            </p:schedule>
+        </h:form>
+    </div>
+
+    <p:dialog widgetVar="eventDialog" header="New Reservation" modal="true"
+              showEffect="fade" hideEffect="fade" responsive="true" width="450">
+
+        <h:form id="dialogForm">
+            <p:outputPanel id="eventDetails" class="ui-fluid">
+
+                <div class="field" style="margin-bottom: 15px;">
+                    <p:outputLabel value="Selected Date:" style="font-weight: bold; color: #555;"/>
+                    <h:outputText value="#{bookingView.clickedDate}" style="display:block; font-size: 1.2em; font-weight: bold;">
+                        <f:convertDateTime type="localDate" pattern="EEEE, dd MMMM yyyy"/>
+                    </h:outputText>
+                </div>
+
+                <div class="formgrid grid" style="display: flex; gap: 10px; margin-bottom: 15px;">
+                    <div class="field col" style="flex: 1;">
+                        <p:outputLabel for="from" value="Start Time" />
+                        <p:datePicker id="from" value="#{bookingView.startTime}"
+                                      timeOnly="true" pattern="HH:mm" stepMinute="30" required="true">
+                            <p:ajax event="dateSelect" listener="#{bookingView.onTimeChange}" update="type msgDialog"/>
+                            <p:ajax event="change" listener="#{bookingView.onTimeChange}" update="type msgDialog"/>
+                        </p:datePicker>
+                    </div>
+
+                    <div class="field col" style="flex: 1;">
+                        <p:outputLabel for="to" value="End Time" />
+                        <p:datePicker id="to" value="#{bookingView.endTime}"
+                                      timeOnly="true" pattern="HH:mm" stepMinute="30" required="true">
+                            <p:ajax event="dateSelect" listener="#{bookingView.onTimeChange}" update="type msgDialog"/>
+                            <p:ajax event="change" listener="#{bookingView.onTimeChange}" update="type msgDialog"/>
+                        </p:datePicker>
+                    </div>
+                </div>
+
+                <p:staticMessage id="msgDialog" severity="warn" summary="FULL" detail="No machines available for these hours"
+                                 style="width: 100%; margin-bottom: 10px;"
+                                 rendered="#{empty bookingView.selectedType and not empty bookingView.machineTypeOptions}"/>
+
+                <div class="field" style="margin-bottom: 15px;">
+                    <p:outputLabel for="type" value="Machine Type" />
+                    <p:selectOneMenu id="type" value="#{bookingView.selectedType}" required="true">
+                        <f:selectItems value="#{bookingView.machineTypeOptions}" />
+                    </p:selectOneMenu>
+                </div>
+
+            </p:outputPanel>
+
+            <div style="text-align: right; margin-top: 20px; border-top: 1px solid #eee; padding-top: 10px;">
+                <p:commandButton value="Confirm Booking" icon="pi pi-check"
+                                 action="#{bookingView.createBooking}"
+                                 update=":scheduleForm:schedule :scheduleForm:messages"
+                                 process="@form"
+                                 oncomplete="if (!args.validationFailed) PF('eventDialog').hide();"
+                                 styleClass="ui-button-success"/>
+            </div>
+        </h:form>
+    </p:dialog>
+
+</h:body>
+</html>

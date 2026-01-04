@@ -1,5 +1,7 @@
 package com.laundry.app.repository;
 
+import com.laundry.app.model.MachineType;
+
 import com.laundry.app.model.Booking;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -30,5 +32,11 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     @Query("SELECT b FROM Booking b WHERE b.startTime >= :start AND b.endTime <= :end")
     List<Booking> findByDateRange(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
-    
+
+    @Query("SELECT COUNT(b) FROM Booking b " +
+            "WHERE b.machine.type = :type " +
+            "AND ((:start < b.endTime) AND (:end > b.startTime))")
+    long countConflictingBookings(@Param("type") MachineType type,
+                                  @Param("start") LocalDateTime start,
+                                  @Param("end") LocalDateTime end);
 }

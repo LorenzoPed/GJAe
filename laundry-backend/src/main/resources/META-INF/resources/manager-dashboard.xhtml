@@ -6,39 +6,49 @@
 
 <h:head>
     <title>Manager Dashboard</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f4f9; padding: 20px;}
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .ui-menubar { margin-bottom: 20px; }
+    </style>
 </h:head>
 
 <h:body>
     <div class="card">
-        <!-- Menu Bar -->
         <h:form>
             <p:menubar>
-                <p:menuitem value="Manager Dashboard" icon="pi pi-home" url="/manager-dashboard.xhtml"/>
-                <p:menuitem value="My Bookings" icon="pi pi-calendar" url="/user-booking.xhtml"/>
-                <p:menuitem value="Logout" url="/logout" icon="pi pi-power-off"/>
+                <p:menuitem value="Dashboard" icon="pi pi-home" url="/manager-dashboard.xhtml"
+                            disabled="true" style="font-weight: bold; opacity: 1 !important; color: #333 !important;"/>
+
+                <p:menuitem value="Calendar" icon="pi pi-calendar" url="/home.xhtml"/>
+
+                <p:menuitem value="My Bookings" icon="pi pi-list" url="/my-bookings.xhtml"/>
+
+                <f:facet name="options">
+                    <p:button value="Logout" href="/logout" icon="pi pi-power-off" styleClass="ui-button-danger ui-button-flat"/>
+                </f:facet>
             </p:menubar>
         </h:form>
 
-        <h1 style="text-align:center; margin-top: 20px;">🔧 Manager Dashboard</h1>
+        <h1 style="text-align:center; margin-top: 10px;">🔧 Manager Dashboard</h1>
 
-        <div style="padding: 20px;">
+        <div style="padding: 10px;">
 
-            <!-- SECTION 1: ALL MACHINES -->
             <h:form id="machinesForm">
-                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 30px;">
-                    <h2 style="margin-top: 0;">🧺 Laundry Machines</h2>
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 30px; border: 1px solid #ddd;">
+                    <h2 style="margin-top: 0; color: #555;">🧺 Laundry Machines</h2>
 
                     <p:dataTable var="machine"
                                  value="#{machineView.machines}"
                                  stripedRows="true"
-                                 style="margin-top: 15px;">
+                                 style="margin-top: 10px;">
 
-                        <p:column headerText="ID" style="width: 60px;">
+                        <p:column headerText="ID" style="width: 50px;">
                             <h:outputText value="#{machine.id}"/>
                         </p:column>
 
                         <p:column headerText="Name">
-                            <h:outputText value="#{machine.name}" style="font-weight: bold; font-size: 1.1em;"/>
+                            <h:outputText value="#{machine.name}" style="font-weight: bold;"/>
                         </p:column>
 
                         <p:column headerText="Type" style="width: 120px;">
@@ -53,35 +63,29 @@
                                    icon="#{machine.enabled ? 'pi pi-check-circle' : 'pi pi-times-circle'}"/>
                         </p:column>
 
-                        <p:column headerText="Actions" style="width: 150px;">
+                        <p:column headerText="Actions" style="width: 120px; text-align: center;">
                             <p:commandButton icon="pi pi-pencil"
                                              styleClass="rounded-button ui-button-flat ui-button-warning"
-                                             title="Edit Machine"
-                                             style="margin-right: 5px;"/>
-
-                            <p:commandButton icon="pi pi-trash"
-                                             styleClass="rounded-button ui-button-danger ui-button-flat"
-                                             title="Delete Machine"/>
+                                             title="Edit Machine"/>
                         </p:column>
                     </p:dataTable>
                 </div>
             </h:form>
 
-            <!-- SECTION 2: ALL BOOKINGS WITH FILTERING -->
             <h:form id="bookingsForm">
                 <div style="background: #fff; padding: 15px; border-radius: 8px; border: 2px solid #e0e0e0;">
-                    <h2 style="margin-top: 0;">📅 All Bookings</h2>
+                    <h2 style="margin-top: 0; color: #333;">📅 All System Bookings</h2>
 
-                    <p:dataTable var="booking"
+                    <p:dataTable id="dt-allbookings"
+                                 var="booking"
                                  value="#{bookingView.allBookings}"
                                  stripedRows="true"
                                  paginator="true"
                                  rows="10"
-                                 emptyMessage="No bookings found"
-                                 filteredValue="#{bookingView.filteredBookings}"
-                                 style="margin-top: 15px;">
+                                 emptyMessage="No bookings found in the system."
+                                 filteredValue="#{bookingView.filteredBookings}">
 
-                        <p:column headerText="ID" sortBy="#{booking.id}" style="width: 60px;">
+                        <p:column headerText="ID" sortBy="#{booking.id}" style="width: 50px;">
                             <h:outputText value="#{booking.id}"/>
                         </p:column>
 
@@ -89,71 +93,50 @@
                                   sortBy="#{booking.user.username}"
                                   filterBy="#{booking.user.username}"
                                   filterMatchMode="contains">
-                            <h:outputText value="#{booking.user.username}"
-                                          style="font-weight: bold; color: #2196F3;"/>
+                            <h:outputText value="#{booking.user.username}" style="font-weight: bold; color: #2196F3;"/>
                         </p:column>
 
                         <p:column headerText="Machine"
                                   sortBy="#{booking.machine.name}"
                                   filterBy="#{booking.machine.name}"
                                   filterMatchMode="contains">
-                            <h:outputText value="#{booking.machine.name}" style="font-weight: bold;"/>
-                            <br/>
-                            <p:tag value="#{booking.machine.type}"
-                                   severity="#{booking.machine.type == 'WASHER' ? 'info' : 'warning'}"
-                                   style="margin-top: 5px;"/>
+                            <h:outputText value="#{booking.machine.name}"/>
                         </p:column>
 
-                        <p:column headerText="Start Time" sortBy="#{booking.startTime}" style="width: 150px;">
-                            <h:outputText value="#{booking.startTime}" style="color: #4CAF50; font-weight: 500;">
+                        <p:column headerText="Start Time" sortBy="#{booking.startTime}">
+                            <h:outputText value="#{booking.startTime}" style="color: #2e7d32; font-weight: 500;">
                                 <f:convertDateTime type="localDateTime" pattern="dd/MM/yyyy HH:mm"/>
                             </h:outputText>
                         </p:column>
 
-                        <p:column headerText="End Time" sortBy="#{booking.endTime}" style="width: 150px;">
-                            <h:outputText value="#{booking.endTime}" style="color: #FF5722; font-weight: 500;">
+                        <p:column headerText="End Time" sortBy="#{booking.endTime}">
+                            <h:outputText value="#{booking.endTime}" style="color: #c62828; font-weight: 500;">
                                 <f:convertDateTime type="localDateTime" pattern="dd/MM/yyyy HH:mm"/>
                             </h:outputText>
                         </p:column>
 
-                        <p:column headerText="Status"
-                                  filterBy="#{booking.status}"
-                                  filterMatchMode="equals"
-                                  style="width: 130px;">
-                            <f:facet name="filter">
-                                <p:selectOneMenu onchange="PF('bookingsTable').filter()">
-                                    <f:selectItem itemLabel="All" itemValue="#{null}" noSelectionOption="true"/>
-                                    <f:selectItem itemLabel="CONFIRMED" itemValue="CONFIRMED"/>
-                                    <f:selectItem itemLabel="PENDING" itemValue="PENDING"/>
-                                    <f:selectItem itemLabel="COMPLETED" itemValue="COMPLETED"/>
-                                    <f:selectItem itemLabel="CANCELLED" itemValue="CANCELLED"/>
-                                </p:selectOneMenu>
-                            </f:facet>
-
-                            <p:tag severity="#{booking.status == 'CONFIRMED' ? 'success' : (booking.status == 'COMPLETED' ? 'info' : 'warning')}"
-                                   value="#{booking.status}"
-                                   style="font-size: 0.9em;"/>
+                        <p:column headerText="Status" style="width: 100px;">
+                            <p:tag severity="success" value="CONFIRMED"/>
                         </p:column>
 
-                        <p:column headerText="Actions" style="width: 100px;">
-                            <p:commandButton icon="pi pi-times"
+                        <p:column headerText="Actions" style="width: 80px; text-align: center;">
+                            <p:commandButton icon="pi pi-trash"
                                              styleClass="rounded-button ui-button-danger ui-button-flat"
                                              action="#{bookingView.cancelBooking(booking.id)}"
-                                             update="@form"
-                                             title="Cancel Booking"
-                                             disabled="#{booking.status == 'CANCELLED' or booking.status == 'COMPLETED'}">
-                                <p:confirm header="Confirm Cancellation"
-                                           message="Cancel booking for #{booking.user.username}?"
+                                             update="bookingsForm:dt-allbookings"
+                                             title="Force Cancel">
+                                <p:confirm header="Manager Override"
+                                           message="Are you sure you want to delete this user's booking?"
                                            icon="pi pi-exclamation-triangle"/>
                             </p:commandButton>
                         </p:column>
                     </p:dataTable>
-
-                    <p:confirmDialog global="true" showEffect="fade">
-                        <p:commandButton value="Yes" type="button" styleClass="ui-confirmdialog-yes" icon="pi pi-check"/>
-                        <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no ui-button-secondary" icon="pi pi-times"/>
-                    </p:confirmDialog>
                 </div>
+
+                <p:confirmDialog global="true" showEffect="fade" hideEffect="fade" responsive="true" width="350">
+                    <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no ui-button-flat"/>
+                    <p:commandButton value="Yes" type="button" styleClass="ui-confirmdialog-yes ui-button-danger" />
+                </p:confirmDialog>
             </h:form>
 
         </div>

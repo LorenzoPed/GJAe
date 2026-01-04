@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:f="http://xmlns.jcp.org/jsf/core">
+
+<h:head>
+    <title>My Bookings</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f4f9; padding: 20px;}
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    </style>
+</h:head>
+
+<h:body>
+    <div class="card">
+        <h:form>
+            <p:menubar style="margin-bottom: 20px;">
+
+                <p:menuitem value="Calendar Home" icon="pi pi-calendar" url="/home.xhtml"/>
+
+                <p:menuitem value="Back to Dashboard"
+                            icon="pi pi-cog"
+                            url="/manager-dashboard.xhtml"
+                            style="font-weight: bold; color: #E91E63;"
+                            rendered="#{request.isUserInRole('MANAGER')}" />
+
+                <p:menuitem value="Logout" url="/logout" icon="pi pi-power-off"/>
+            </p:menubar>
+        </h:form>
+
+        <h1 style="text-align:center; margin-top: 20px;">🧾 My Active Reservations</h1>
+
+        <div style="padding: 20px;">
+            <h:form id="myBookingsForm">
+                <p:growl id="msg" showDetail="true"/>
+
+                <p:dataTable id="dt-mybookings"
+                             value="#{bookingView.myBookings}"
+                             var="booking"
+                             stripedRows="true"
+                             emptyMessage="No bookings found.">
+
+                    <p:column headerText="ID" style="width: 50px;">
+                        <h:outputText value="#{booking.id}" />
+                    </p:column>
+
+                    <p:column headerText="Date">
+                        <h:outputText value="#{booking.startTime}">
+                            <f:convertDateTime type="localDateTime" pattern="dd/MM/yyyy" />
+                        </h:outputText>
+                    </p:column>
+
+                    <p:column headerText="Time Slot">
+                        <h:outputText value="#{booking.startTime}">
+                            <f:convertDateTime type="localDateTime" pattern="HH:mm" />
+                        </h:outputText>
+                        -
+                        <h:outputText value="#{booking.endTime}">
+                            <f:convertDateTime type="localDateTime" pattern="HH:mm" />
+                        </h:outputText>
+                    </p:column>
+
+                    <p:column headerText="Machine">
+                        <h:panelGroup rendered="#{booking.machine != null}">
+                            <p:tag value="#{booking.machine.type}"
+                                   severity="#{booking.machine.type == 'WASHER' ? 'info' : 'warning'}"
+                                   style="margin-right: 5px"/>
+                            <h:outputText value="#{booking.machine.name}" style="font-weight: bold"/>
+                        </h:panelGroup>
+                    </p:column>
+
+                    <p:column headerText="Status">
+                        <p:tag value="CONFIRMED" severity="success" />
+                    </p:column>
+
+                    <p:column headerText="Action">
+                        <p:commandButton icon="pi pi-trash" styleClass="rounded-button ui-button-danger ui-button-flat"
+                                         action="#{bookingView.cancelBooking(booking.id)}"
+                                         update="@form"
+                                         title="Cancel Booking">
+                            <p:confirm header="Confirmation" message="Delete this booking?" icon="pi pi-info-circle"/>
+                        </p:commandButton>
+                    </p:column>
+
+                </p:dataTable>
+
+                <p:confirmDialog global="true" showEffect="fade" hideEffect="fade" responsive="true" width="350">
+                    <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no ui-button-flat"/>
+                    <p:commandButton value="Yes" type="button" styleClass="ui-confirmdialog-yes" />
+                </p:confirmDialog>
+
+            </h:form>
+        </div>
+    </div>
+</h:body>
+</html>
