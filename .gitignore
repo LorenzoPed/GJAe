@@ -75,3 +75,10 @@ docker-data/
 # -------------------------
 dependency-reduced-pom.xml
 
+# -------------------------
+# Local H2 database (generated at runtime)
+# -------------------------
+data/
+*.mv.db
+*.trace.db
+
