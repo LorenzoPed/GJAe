@@ -1,6 +1,7 @@
 package com.laundry.app.service;
 
 import com.laundry.app.model.Machine;
+import com.laundry.app.model.MachineType;
 import com.laundry.app.repository.MachineRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -17,7 +18,7 @@ public class MachineService {
         this.machineRepository = machineRepository;
     }
 
-    //Returns all machines
+    // Returns all machines
     public List<Machine> getAllMachines() {
         return machineRepository.findAll();
     }
@@ -33,7 +34,25 @@ public class MachineService {
         return machineRepository.save(machine);
     }
 
-    // Update name and status (enabled)
+    /**
+     * Updates only the machine name and type (does not change enabled flag).
+     */
+    public Machine updateMachineNameAndType(Long id, String name, MachineType type) {
+        if (name == null || name.trim().isEmpty()) {
+            throw new IllegalArgumentException("Machine name cannot be empty.");
+        }
+        if (type == null) {
+            throw new IllegalArgumentException("Machine type is required.");
+        }
+
+        Machine machine = getMachineById(id);
+        machine.setName(name.trim());
+        machine.setType(type);
+
+        return machineRepository.save(machine);
+    }
+
+    // Update machine (full update used by REST controller)
     public Machine updateMachine(Long id, Machine machineDetails) {
         Machine machine = getMachineById(id);
 

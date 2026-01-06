@@ -79,7 +79,15 @@
 					>
 						<h2 style="margin-top: 0; color: #555">🧺 Laundry Machines</h2>
 
+						<p:messages
+							id="machineMessages"
+							closable="true"
+							showDetail="true"
+							style="margin-top: 10px"
+						/>
+
 						<p:dataTable
+							id="machinesTable"
 							var="machine"
 							value="#{machineView.machines}"
 							stripedRows="true"
@@ -120,10 +128,71 @@
 									icon="pi pi-pencil"
 									styleClass="rounded-button ui-button-flat ui-button-warning"
 									title="Edit Machine"
-									disabled="true"
+									process="@this"
+									actionListener="#{machineView.openEdit(machine)}"
+									update=":machinesForm:editMachineDialog"
+									oncomplete="PF('editMachineDialog').show()"
 								/>
 							</p:column>
 						</p:dataTable>
+
+						<p:dialog
+							id="editMachineDialog"
+							widgetVar="editMachineDialog"
+							header="Edit Machine"
+							modal="true"
+							responsive="true"
+							appendTo="@form"
+							showEffect="fade"
+							hideEffect="fade"
+							closable="true"
+							width="420"
+						>
+							<h:panelGrid columns="2" cellpadding="6" style="width: 100%">
+								<h:outputLabel for="editName" value="Name" />
+								<p:inputText
+									id="editName"
+									value="#{machineView.editName}"
+									required="true"
+									requiredMessage="Name is required."
+									style="width: 100%"
+								/>
+
+								<h:outputLabel for="editType" value="Type" />
+								<p:selectOneMenu
+									id="editType"
+									value="#{machineView.editType}"
+									style="width: 100%"
+									required="true"
+									requiredMessage="Type is required."
+								>
+									<f:selectItems
+										value="#{machineView.machineTypes}"
+										var="t"
+										itemLabel="#{t}"
+										itemValue="#{t}"
+									/>
+								</p:selectOneMenu>
+							</h:panelGrid>
+
+							<f:facet name="footer">
+								<p:commandButton
+									value="Save"
+									icon="pi pi-check"
+									action="#{machineView.saveEdit}"
+									process="@form"
+									update="machinesTable machineMessages"
+									oncomplete="if (!args.validationFailed) PF('editMachineDialog').hide();"
+								/>
+								<p:commandButton
+									value="Cancel"
+									type="button"
+									icon="pi pi-times"
+									styleClass="ui-button-secondary ui-button-flat"
+									onclick="PF('editMachineDialog').hide();"
+								/>
+							</f:facet>
+						</p:dialog>
 					</div>
 				</h:form>
 
