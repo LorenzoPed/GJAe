@@ -36,8 +36,30 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
         @Param("excludedStatus") BookingStatus excludedStatus
     );
 
-    @Query("SELECT b FROM Booking b WHERE b.startTime >= :start AND b.endTime <= :end")
-    List<Booking> findByDateRange(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+    @Query("""
+        SELECT b
+        FROM Booking b
+        WHERE b.startTime >= :start AND b.endTime <= :end
+        """)
+    List<Booking> findByDateRange(
+        @Param("start") LocalDateTime start,
+        @Param("end") LocalDateTime end
+    );
+
+    @Query("""
+        SELECT b
+        FROM Booking b
+        WHERE b.machine.id = :machineId
+          AND b.status <> :excludedStatus
+          AND ((:start < b.endTime) AND (:end > b.startTime))
+        ORDER BY b.startTime
+        """)
+    List<Booking> findOverlappingBookingsForMachine(
+        @Param("machineId") Long machineId,
+        @Param("start") LocalDateTime start,
+        @Param("end") LocalDateTime end,
+        @Param("excludedStatus") BookingStatus excludedStatus
+    );
 
     @Query("""
         SELECT COUNT(b)
@@ -51,6 +73,24 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
         @Param("type") MachineType type,
         @Param("start") LocalDateTime start,
         @Param("end") LocalDateTime end,
+        @Param("excludedStatus") BookingStatus excludedStatus
+    );
+
+    /**
+     * Used when a machine is disabled:
+     * returns all future (or ongoing) bookings that still depend on that machine.
+     */
+    @Query("""
+        SELECT b
+        FROM Booking b
+        WHERE b.machine.id = :machineId
+          AND b.status <> :excludedStatus
+          AND b.endTime > :from
+        ORDER BY b.startTime
+        """)
+    List<Booking> findFutureBookingsForMachine(
+        @Param("machineId") Long machineId,
+        @Param("from") LocalDateTime from,
         @Param("excludedStatus") BookingStatus excludedStatus
     );
 }

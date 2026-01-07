@@ -2,14 +2,18 @@ package com.laundry.app.view;
 
 import com.laundry.app.model.Machine;
 import com.laundry.app.model.MachineType;
+import com.laundry.app.model.Maintenance;
+import com.laundry.app.service.MaintenanceService;
 import com.laundry.app.service.MachineService;
 import jakarta.annotation.PostConstruct;
 import jakarta.faces.application.FacesMessage;
 import jakarta.faces.context.FacesContext;
 import jakarta.faces.view.ViewScoped;
+import org.primefaces.PrimeFaces;
 import org.springframework.stereotype.Component;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Component
@@ -17,16 +21,25 @@ import java.util.List;
 public class MachineView implements Serializable {
 
     private final MachineService machineService;
+    private final MaintenanceService maintenanceService;
 
     private List<Machine> machines;
+    private List<Long> machineIdsUnderMaintenanceNow;
 
-    // Edit dialog state
     private Long selectedMachineId;
     private String editName;
     private MachineType editType;
 
-    public MachineView(MachineService machineService) {
+    private Long maintenanceMachineId;
+    private String maintenanceMachineName;
+    private LocalDateTime maintenanceStart;
+    private LocalDateTime maintenanceEnd;
+    private String maintenanceReason;
+    private List<Maintenance> upcomingMaintenances;
+
+    public MachineView(MachineService machineService, MaintenanceService maintenanceService) {
         this.machineService = machineService;
+        this.maintenanceService = maintenanceService;
     }
 
     @PostConstruct
@@ -36,11 +49,9 @@ public class MachineView implements Serializable {
 
     public void reloadMachines() {
         this.machines = machineService.getAllMachines();
+        this.machineIdsUnderMaintenanceNow = maintenanceService.getMachineIdsUnderMaintenanceNow();
     }
 
-    /**
-     * Prepares the edit dialog with the selected machine values.
-     */
     public void openEdit(Machine machine) {
         if (machine == null) {
             return;
@@ -50,11 +61,9 @@ public class MachineView implements Serializable {
         this.editType = machine.getType();
     }
 
-    /**
-     * Saves the edit form (name + type). Does not change the machine enabled flag.
-     */
     public void saveEdit() {
         FacesContext faces = FacesContext.getCurrentInstance();
+        setCallbackSuccess(false);
 
         if (selectedMachineId == null) {
             faces.addMessage(null, new FacesMessage(
@@ -74,6 +83,7 @@ public class MachineView implements Serializable {
                 "Saved",
                 "Machine updated successfully."
             ));
+            setCallbackSuccess(true);
         } catch (IllegalArgumentException ex) {
             faces.addMessage(null, new FacesMessage(
                 FacesMessage.SEVERITY_WARN,
@@ -89,7 +99,199 @@ public class MachineView implements Serializable {
         }
     }
 
-    // --- Getters / Setters used by JSF ---
+    public void toggleEnabled(Machine machine) {
+        FacesContext faces = FacesContext.getCurrentInstance();
+        setCallbackSuccess(false);
+
+        if (machine == null || machine.getId() == null) {
+            faces.addMessage(null, new FacesMessage(
+                FacesMessage.SEVERITY_ERROR,
+                "Error",
+                "No machine selected."
+            ));
+            return;
+        }
+
+        boolean newEnabledState = !machine.isEnabled();
+
+        try {
+            // If disabling -> reschedule/cancel impacted bookings first
+            MaintenanceService.MaintenanceResult disableResult = null;
+            if (!newEnabledState) {
+                disableResult = maintenanceService.handleMachineDisabled(machine.getId());
+            }
+
+            Machine details = new Machine();
+            details.setName(machine.getName());
+            details.setType(machine.getType());
+            details.setEnabled(newEnabledState);
+
+            machineService.updateMachine(machine.getId(), details);
+            reloadMachines();
+
+            if (!newEnabledState && disableResult != null) {
+                faces.addMessage(null, new FacesMessage(
+                    FacesMessage.SEVERITY_INFO,
+                    "Updated",
+                    "Machine disabled. Impacted bookings: " + disableResult.getImpactedBookings()
+                        + " (rescheduled: " + disableResult.getRescheduledBookings()
+                        + ", cancelled: " + disableResult.getCancelledBookings() + ")"
+                ));
+            } else {
+                faces.addMessage(null, new FacesMessage(
+                    FacesMessage.SEVERITY_INFO,
+                    "Updated",
+                    newEnabledState ? "Machine enabled successfully." : "Machine disabled successfully."
+                ));
+            }
+
+            setCallbackSuccess(true);
+        } catch (RuntimeException ex) {
+            faces.addMessage(null, new FacesMessage(
+                FacesMessage.SEVERITY_ERROR,
+                "Error",
+                ex.getMessage()
+            ));
+        }
+    }
+
+    public void openMaintenance(Machine machine) {
+        if (machine == null) {
+            return;
+        }
+
+        this.maintenanceMachineId = machine.getId();
+        this.maintenanceMachineName = machine.getName();
+        this.maintenanceStart = null;
+        this.maintenanceEnd = null;
+        this.maintenanceReason = null;
+        this.upcomingMaintenances = maintenanceService.getUpcomingMaintenances(machine.getId());
+    }
+
+    public void applyMaintenance() {
+        FacesContext faces = FacesContext.getCurrentInstance();
+        setCallbackSuccess(false);
+
+        if (maintenanceMachineId == null) {
+            faces.addMessage(null, new FacesMessage(
+                FacesMessage.SEVERITY_ERROR,
+                "Error",
+                "No machine selected."
+            ));
+            return;
+        }
+
+        try {
+            MaintenanceService.MaintenanceResult result = maintenanceService.scheduleMaintenance(
+                maintenanceMachineId,
+                maintenanceStart,
+                maintenanceEnd,
+                maintenanceReason
+            );
+
+            reloadMachines();
+            this.upcomingMaintenances = maintenanceService.getUpcomingMaintenances(maintenanceMachineId);
+
+            faces.addMessage(null, new FacesMessage(
+                FacesMessage.SEVERITY_INFO,
+                "Maintenance scheduled",
+                "Impacted bookings: " + result.getImpactedBookings()
+                    + " (rescheduled: " + result.getRescheduledBookings()
+                    + ", cancelled: " + result.getCancelledBookings() + ")"
+            ));
+
+            setCallbackSuccess(true);
+        } catch (IllegalArgumentException ex) {
+            faces.addMessage(null, new FacesMessage(
+                FacesMessage.SEVERITY_WARN,
+                "Validation",
+                ex.getMessage()
+            ));
+        } catch (RuntimeException ex) {
+            faces.addMessage(null, new FacesMessage(
+                FacesMessage.SEVERITY_ERROR,
+                "Error",
+                ex.getMessage()
+            ));
+        }
+    }
+
+    public void cancelMaintenance(Long maintenanceId) {
+        FacesContext faces = FacesContext.getCurrentInstance();
+        setCallbackSuccess(false);
+
+        try {
+            maintenanceService.cancelMaintenance(maintenanceId);
+            reloadMachines();
+
+            if (maintenanceMachineId != null) {
+                this.upcomingMaintenances = maintenanceService.getUpcomingMaintenances(maintenanceMachineId);
+            }
+
+            faces.addMessage(null, new FacesMessage(
+                FacesMessage.SEVERITY_INFO,
+                "Cancelled",
+                "Maintenance cancelled successfully."
+            ));
+            setCallbackSuccess(true);
+        } catch (RuntimeException ex) {
+            faces.addMessage(null, new FacesMessage(
+                FacesMessage.SEVERITY_ERROR,
+                "Error",
+                ex.getMessage()
+            ));
+        }
+    }
+
+    public boolean isUnderMaintenance(Machine machine) {
+        if (machine == null || machineIdsUnderMaintenanceNow == null) {
+            return false;
+        }
+        return machine.isEnabled() && machineIdsUnderMaintenanceNow.contains(machine.getId());
+    }
+
+    public String getStatusLabel(Machine machine) {
+        if (machine == null) {
+            return "";
+        }
+        if (!machine.isEnabled()) {
+            return "Disabled";
+        }
+        if (isUnderMaintenance(machine)) {
+            return "Maintenance";
+        }
+        return "Active";
+    }
+
+    public String getStatusSeverity(Machine machine) {
+        if (machine == null) {
+            return "info";
+        }
+        if (!machine.isEnabled()) {
+            return "danger";
+        }
+        if (isUnderMaintenance(machine)) {
+            return "warning";
+        }
+        return "success";
+    }
+
+    public String getStatusIcon(Machine machine) {
+        if (machine == null) {
+            return "pi pi-info-circle";
+        }
+        if (!machine.isEnabled()) {
+            return "pi pi-times-circle";
+        }
+        if (isUnderMaintenance(machine)) {
+            return "pi pi-wrench";
+        }
+        return "pi pi-check-circle";
+    }
+
+    private void setCallbackSuccess(boolean success) {
+        PrimeFaces.current().ajax().addCallbackParam("success", success);
+    }
 
     public List<Machine> getMachines() {
         return machines;
@@ -121,5 +323,41 @@ public class MachineView implements Serializable {
 
     public MachineType[] getMachineTypes() {
         return MachineType.values();
+    }
+
+    public Long getMaintenanceMachineId() {
+        return maintenanceMachineId;
+    }
+
+    public String getMaintenanceMachineName() {
+        return maintenanceMachineName;
+    }
+
+    public LocalDateTime getMaintenanceStart() {
+        return maintenanceStart;
+    }
+
+    public void setMaintenanceStart(LocalDateTime maintenanceStart) {
+        this.maintenanceStart = maintenanceStart;
+    }
+
+    public LocalDateTime getMaintenanceEnd() {
+        return maintenanceEnd;
+    }
+
+    public void setMaintenanceEnd(LocalDateTime maintenanceEnd) {
+        this.maintenanceEnd = maintenanceEnd;
+    }
+
+    public String getMaintenanceReason() {
+        return maintenanceReason;
+    }
+
+    public void setMaintenanceReason(String maintenanceReason) {
+        this.maintenanceReason = maintenanceReason;
+    }
+
+    public List<Maintenance> getUpcomingMaintenances() {
+        return upcomingMaintenances;
     }
 }

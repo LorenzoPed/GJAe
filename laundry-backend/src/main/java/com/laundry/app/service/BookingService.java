@@ -3,10 +3,12 @@ package com.laundry.app.service;
 import com.laundry.app.dto.BookingRequest;
 import com.laundry.app.model.Booking;
 import com.laundry.app.model.BookingStatus;
+import com.laundry.app.model.MaintenanceStatus;
 import com.laundry.app.model.Machine;
 import com.laundry.app.model.MachineType;
 import com.laundry.app.model.User;
 import com.laundry.app.repository.BookingRepository;
+import com.laundry.app.repository.MaintenanceRepository;
 import com.laundry.app.repository.MachineRepository;
 import com.laundry.app.repository.UserRepository;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -23,15 +25,18 @@ public class BookingService {
     private final BookingRepository bookingRepository;
     private final MachineRepository machineRepository;
     private final UserRepository userRepository;
+    private final MaintenanceRepository maintenanceRepository;
 
     public BookingService(
         BookingRepository bookingRepository,
         MachineRepository machineRepository,
-        UserRepository userRepository
+        UserRepository userRepository,
+        MaintenanceRepository maintenanceRepository
     ) {
         this.bookingRepository = bookingRepository;
         this.machineRepository = machineRepository;
         this.userRepository = userRepository;
+        this.maintenanceRepository = maintenanceRepository;
     }
 
     public Booking createBooking(BookingRequest request) {
@@ -62,7 +67,14 @@ public class BookingService {
                 BookingStatus.CANCELLED
             );
 
-            if (!isOccupied) {
+            boolean isUnderMaintenance = maintenanceRepository.existsOverlap(
+                machine.getId(),
+                request.getStartTime(),
+                request.getEndTime(),
+                MaintenanceStatus.CANCELLED
+            );
+
+            if (!isOccupied && !isUnderMaintenance) {
                 selectedMachine = machine;
                 break;
             }
@@ -126,6 +138,18 @@ public class BookingService {
             return false;
         }
 
+        long machinesUnderMaintenance = maintenanceRepository.countMachinesWithOverlappingMaintenanceByType(
+            type,
+            start,
+            end,
+            MaintenanceStatus.CANCELLED
+        );
+
+        long availableMachines = enabledMachines - machinesUnderMaintenance;
+        if (availableMachines <= 0) {
+            return false;
+        }
+
         long activeBookings = bookingRepository.countConflictingBookings(
             type,
             start,
@@ -133,7 +157,7 @@ public class BookingService {
             BookingStatus.CANCELLED
         );
 
-        return activeBookings < enabledMachines;
+        return activeBookings < availableMachines;
     }
 
     public List<Booking> getBookings(Long userId, Long machineId) {
