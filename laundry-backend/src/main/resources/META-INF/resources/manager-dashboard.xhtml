@@ -197,7 +197,7 @@
 								action="#{machineView.saveEdit}"
 								process="@form"
 								update=":editForm:editMessages :machinesForm:machinesTable :machinesForm:machineMessages"
-								oncomplete="if (args &amp;&amp; args.success) PF('editMachineDialog').hide();"
+								oncomplete="if (args &amp;&amp; args.success) { rcReloadAllBookings(); PF('editMachineDialog').hide(); }"
 							/>
 							<p:commandButton
 								value="Cancel"
