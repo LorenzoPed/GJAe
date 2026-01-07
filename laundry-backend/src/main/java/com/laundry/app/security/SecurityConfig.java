@@ -29,6 +29,7 @@ public class SecurityConfig {
                 ).permitAll()
 
                 .requestMatchers("/login.xhtml", "/login").permitAll()
+                .requestMatchers("/register.xhtml", "/register").permitAll()
                 .requestMatchers("/h2-console/**").permitAll()
 
                 .requestMatchers("/manager-dashboard.xhtml").hasRole("MANAGER")

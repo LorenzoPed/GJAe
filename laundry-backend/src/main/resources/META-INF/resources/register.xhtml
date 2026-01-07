@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:p="http://primefaces.org/ui">
+
+<h:head>
+    <title>Register</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f4f4f9;
+            font-family: Arial, sans-serif;
+            margin: 0;
+        }
+        .register-card {
+            width: 400px;
+            padding: 20px;
+        }
+    </style>
+</h:head>
+
+<h:body>
+    <p:card styleClass="register-card">
+        <div style="text-align: center; margin-bottom: 20px;">
+            <h2>Register</h2>
+            <p>Create your account</p>
+        </div>
+
+        <h:form id="registerForm">
+            <div class="field" style="margin-bottom: 20px;">
+                <span class="ui-float-label">
+                    <p:inputText id="username" value="#{registerController.username}" required="true" style="width: 100%"/>
+                    <p:outputLabel for="@previous" value="Username"/>
+                </span>
+            </div>
+            <div class="field" style="margin-bottom: 20px;">
+                <span class="ui-float-label">
+                    <p:inputText id="email" value="#{registerController.email}" required="true" style="width: 100%"/>
+                    <p:outputLabel for="@previous" value="Email"/>
+                </span>
+            </div>
+            <div class="field" style="margin-bottom: 30px;">
+                <span class="ui-float-label">
+                    <p:password id="password" value="#{registerController.password}" required="true" toggleMask="true" style="width: 100%"/>
+                    <p:outputLabel for="@previous" value="Password"/>
+                </span>
+            </div>
+            <p:commandButton value="Register" action="#{registerController.register}" icon="pi pi-user-plus" style="width: 100%;" />
+        </h:form>
+    </p:card>
+</h:body>
+</html>
