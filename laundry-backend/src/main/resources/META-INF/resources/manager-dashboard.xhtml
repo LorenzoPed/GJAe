@@ -64,6 +64,13 @@
 
 			<h1 style="text-align: center; margin-top: 10px">🔧 Manager Dashboard</h1>
 
+			<!-- Remote command to reload bookings list from DB (no page refresh needed) -->
+			<p:remoteCommand
+				name="rcReloadAllBookings"
+				action="#{bookingView.loadAllBookings}"
+				update=":bookingsForm:dt-allbookings"
+			/>
+
 			<div style="padding: 10px">
 				<!-- MACHINES -->
 				<h:form id="machinesForm">
@@ -153,6 +160,7 @@
 									process="@this"
 									action="#{machineView.toggleEnabled(machine)}"
 									update=":machinesForm:machinesTable :machinesForm:machineMessages :bookingsForm:dt-allbookings"
+									oncomplete="if (args &amp;&amp; args.success) { rcReloadAllBookings(); }"
 								>
 									<p:confirm
 										header="Manager Action"
@@ -344,6 +352,7 @@
 											actionListener="#{machineView.cancelMaintenance(m.id)}"
 											process="@this"
 											update=":maintenanceForm:upcomingContainer :machinesForm:machinesTable :maintenanceForm:maintenanceMessages"
+											oncomplete="if (args &amp;&amp; args.success) { rcReloadAllBookings(); }"
 											title="Cancel Maintenance"
 										>
 											<p:confirm
@@ -377,7 +386,7 @@
 								action="#{machineView.applyMaintenance}"
 								process="@form"
 								update=":maintenanceForm:maintenanceMessages :maintenanceForm:upcomingContainer :machinesForm:machinesTable :bookingsForm:dt-allbookings"
-								oncomplete="if (args &amp;&amp; args.success) PF('maintenanceDialog').hide();"
+								oncomplete="if (args &amp;&amp; args.success) { rcReloadAllBookings(); PF('maintenanceDialog').hide(); }"
 							/>
 							<p:commandButton
 								value="Close"
