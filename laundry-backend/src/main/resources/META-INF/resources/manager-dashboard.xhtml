@@ -64,7 +64,6 @@
 
 			<h1 style="text-align: center; margin-top: 10px">🔧 Manager Dashboard</h1>
 
-			<!-- Remote command to reload bookings list from DB (no page refresh needed) -->
 			<p:remoteCommand
 				name="rcReloadAllBookings"
 				action="#{bookingView.loadAllBookings}"
@@ -72,7 +71,6 @@
 			/>
 
 			<div style="padding: 10px">
-				<!-- MACHINES -->
 				<h:form id="machinesForm">
 					<div
 						style="
@@ -85,10 +83,12 @@
 					>
 						<h2 style="margin-top: 0; color: #555">🧺 Laundry Machines</h2>
 
+						<!-- Only GLOBAL messages (so input required/validation will not show here) -->
 						<p:messages
 							id="machineMessages"
 							closable="true"
 							showDetail="true"
+							globalOnly="true"
 							style="margin-top: 10px"
 						/>
 
@@ -137,7 +137,7 @@
 									process="@this"
 									resetValues="true"
 									actionListener="#{machineView.openEdit(machine)}"
-									update=":editForm:editMachineDialog"
+									update=":editForm:editMachineDialog :editForm:editMessages"
 									oncomplete="PF('editMachineDialog').show()"
 								/>
 
@@ -173,7 +173,7 @@
 					</div>
 				</h:form>
 
-				<!-- EDIT DIALOG (own form) -->
+				<!-- EDIT DIALOG -->
 				<h:form id="editForm">
 					<p:dialog
 						id="editMachineDialog"
@@ -188,6 +188,14 @@
 						closable="true"
 						width="420"
 					>
+						<!-- Messages inside the popup -->
+						<p:messages
+							id="editMessages"
+							closable="true"
+							showDetail="true"
+							style="margin-bottom: 10px"
+						/>
+
 						<h:panelGrid columns="2" cellpadding="6" style="width: 100%">
 							<h:outputLabel for="editName" value="Name" />
 							<p:inputText
@@ -221,7 +229,7 @@
 								icon="pi pi-check"
 								action="#{machineView.saveEdit}"
 								process="@form"
-								update=":machinesForm:machinesTable :machinesForm:machineMessages"
+								update=":editForm:editMessages :machinesForm:machinesTable :machinesForm:machineMessages"
 								oncomplete="if (args &amp;&amp; args.success) PF('editMachineDialog').hide();"
 							/>
 							<p:commandButton

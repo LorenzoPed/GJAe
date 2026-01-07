@@ -21,6 +21,11 @@ import java.util.List;
 @ViewScoped
 public class MachineView implements Serializable {
 
+    /**
+     * Target for edit dialog messages (must match ids in manager-dashboard.xhtml)
+     */
+    private static final String EDIT_DIALOG_CLIENT_ID = "editForm:editMachineDialog";
+
     private final MachineService machineService;
     private final MaintenanceService maintenanceService;
     private final BookingService bookingService;
@@ -73,7 +78,7 @@ public class MachineView implements Serializable {
         setCallbackSuccess(false);
 
         if (selectedMachineId == null) {
-            faces.addMessage(null, new FacesMessage(
+            faces.addMessage(EDIT_DIALOG_CLIENT_ID, new FacesMessage(
                 FacesMessage.SEVERITY_ERROR,
                 "Error",
                 "No machine selected."
@@ -85,20 +90,24 @@ public class MachineView implements Serializable {
             machineService.updateMachineNameAndType(selectedMachineId, editName, editType);
             reloadMachines();
 
+            // Success can remain global (background banner)
             faces.addMessage(null, new FacesMessage(
                 FacesMessage.SEVERITY_INFO,
                 "Saved",
                 "Machine updated successfully."
             ));
+
             setCallbackSuccess(true);
         } catch (IllegalArgumentException ex) {
-            faces.addMessage(null, new FacesMessage(
+            // Show inside the dialog
+            faces.addMessage(EDIT_DIALOG_CLIENT_ID, new FacesMessage(
                 FacesMessage.SEVERITY_WARN,
                 "Validation",
                 ex.getMessage()
             ));
         } catch (RuntimeException ex) {
-            faces.addMessage(null, new FacesMessage(
+            // Show inside the dialog
+            faces.addMessage(EDIT_DIALOG_CLIENT_ID, new FacesMessage(
                 FacesMessage.SEVERITY_ERROR,
                 "Error",
                 ex.getMessage()
@@ -129,7 +138,6 @@ public class MachineView implements Serializable {
 
             machineService.updateMachine(machine.getId(), details);
 
-            // If we are disabling, reschedule/cancel future bookings on that machine.
             if (!newEnabled) {
                 BookingService.DisableMachineResult result = bookingService.handleMachineDisabled(machine.getId());
 
