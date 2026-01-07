@@ -36,15 +36,8 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
         @Param("excludedStatus") BookingStatus excludedStatus
     );
 
-    @Query("""
-        SELECT b
-        FROM Booking b
-        WHERE b.startTime >= :start AND b.endTime <= :end
-        """)
-    List<Booking> findByDateRange(
-        @Param("start") LocalDateTime start,
-        @Param("end") LocalDateTime end
-    );
+    @Query("SELECT b FROM Booking b WHERE b.startTime >= :start AND b.endTime <= :end")
+    List<Booking> findByDateRange(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 
     @Query("""
         SELECT b
@@ -77,20 +70,19 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     );
 
     /**
-     * Used when a machine is disabled:
-     * returns all future (or ongoing) bookings that still depend on that machine.
+     * Used when a machine gets disabled: we only impact future bookings.
      */
     @Query("""
         SELECT b
         FROM Booking b
         WHERE b.machine.id = :machineId
           AND b.status <> :excludedStatus
-          AND b.endTime > :from
+          AND b.startTime > :now
         ORDER BY b.startTime
         """)
     List<Booking> findFutureBookingsForMachine(
         @Param("machineId") Long machineId,
-        @Param("from") LocalDateTime from,
+        @Param("now") LocalDateTime now,
         @Param("excludedStatus") BookingStatus excludedStatus
     );
 }

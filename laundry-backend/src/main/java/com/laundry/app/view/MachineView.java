@@ -3,6 +3,7 @@ package com.laundry.app.view;
 import com.laundry.app.model.Machine;
 import com.laundry.app.model.MachineType;
 import com.laundry.app.model.Maintenance;
+import com.laundry.app.service.BookingService;
 import com.laundry.app.service.MaintenanceService;
 import com.laundry.app.service.MachineService;
 import jakarta.annotation.PostConstruct;
@@ -22,6 +23,7 @@ public class MachineView implements Serializable {
 
     private final MachineService machineService;
     private final MaintenanceService maintenanceService;
+    private final BookingService bookingService;
 
     private List<Machine> machines;
     private List<Long> machineIdsUnderMaintenanceNow;
@@ -37,9 +39,14 @@ public class MachineView implements Serializable {
     private String maintenanceReason;
     private List<Maintenance> upcomingMaintenances;
 
-    public MachineView(MachineService machineService, MaintenanceService maintenanceService) {
+    public MachineView(
+        MachineService machineService,
+        MaintenanceService maintenanceService,
+        BookingService bookingService
+    ) {
         this.machineService = machineService;
         this.maintenanceService = maintenanceService;
+        this.bookingService = bookingService;
     }
 
     @PostConstruct
@@ -112,39 +119,36 @@ public class MachineView implements Serializable {
             return;
         }
 
-        boolean newEnabledState = !machine.isEnabled();
+        boolean newEnabled = !machine.isEnabled();
 
         try {
-            // If disabling -> reschedule/cancel impacted bookings first
-            MaintenanceService.MaintenanceResult disableResult = null;
-            if (!newEnabledState) {
-                disableResult = maintenanceService.handleMachineDisabled(machine.getId());
-            }
-
             Machine details = new Machine();
             details.setName(machine.getName());
             details.setType(machine.getType());
-            details.setEnabled(newEnabledState);
+            details.setEnabled(newEnabled);
 
             machineService.updateMachine(machine.getId(), details);
-            reloadMachines();
 
-            if (!newEnabledState && disableResult != null) {
+            // If we are disabling, reschedule/cancel future bookings on that machine.
+            if (!newEnabled) {
+                BookingService.DisableMachineResult result = bookingService.handleMachineDisabled(machine.getId());
+
                 faces.addMessage(null, new FacesMessage(
                     FacesMessage.SEVERITY_INFO,
-                    "Updated",
-                    "Machine disabled. Impacted bookings: " + disableResult.getImpactedBookings()
-                        + " (rescheduled: " + disableResult.getRescheduledBookings()
-                        + ", cancelled: " + disableResult.getCancelledBookings() + ")"
+                    "Machine disabled",
+                    "Impacted bookings: " + result.getImpactedBookings()
+                        + " (rescheduled: " + result.getRescheduledBookings()
+                        + ", cancelled: " + result.getCancelledBookings() + ")"
                 ));
             } else {
                 faces.addMessage(null, new FacesMessage(
                     FacesMessage.SEVERITY_INFO,
-                    "Updated",
-                    newEnabledState ? "Machine enabled successfully." : "Machine disabled successfully."
+                    "Machine enabled",
+                    "Machine status updated successfully."
                 ));
             }
 
+            reloadMachines();
             setCallbackSuccess(true);
         } catch (RuntimeException ex) {
             faces.addMessage(null, new FacesMessage(
@@ -329,8 +333,16 @@ public class MachineView implements Serializable {
         return maintenanceMachineId;
     }
 
+    public void setMaintenanceMachineId(Long maintenanceMachineId) {
+        this.maintenanceMachineId = maintenanceMachineId;
+    }
+
     public String getMaintenanceMachineName() {
         return maintenanceMachineName;
+    }
+
+    public void setMaintenanceMachineName(String maintenanceMachineName) {
+        this.maintenanceMachineName = maintenanceMachineName;
     }
 
     public LocalDateTime getMaintenanceStart() {

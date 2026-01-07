@@ -18,9 +18,34 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class BookingService {
+
+    public static class DisableMachineResult {
+        private final int impactedBookings;
+        private final int rescheduledBookings;
+        private final int cancelledBookings;
+
+        public DisableMachineResult(int impactedBookings, int rescheduledBookings, int cancelledBookings) {
+            this.impactedBookings = impactedBookings;
+            this.rescheduledBookings = rescheduledBookings;
+            this.cancelledBookings = cancelledBookings;
+        }
+
+        public int getImpactedBookings() {
+            return impactedBookings;
+        }
+
+        public int getRescheduledBookings() {
+            return rescheduledBookings;
+        }
+
+        public int getCancelledBookings() {
+            return cancelledBookings;
+        }
+    }
 
     private final BookingRepository bookingRepository;
     private final MachineRepository machineRepository;
@@ -168,5 +193,81 @@ public class BookingService {
             return bookingRepository.findByMachineId(machineId);
         }
         return bookingRepository.findAll();
+    }
+
+    /**
+     * Called when a manager disables a machine.
+     * Reschedules future bookings to another enabled machine of the same type when possible.
+     * Otherwise cancels them.
+     */
+    @Transactional
+    public DisableMachineResult handleMachineDisabled(Long machineId) {
+        if (machineId == null) {
+            return new DisableMachineResult(0, 0, 0);
+        }
+
+        Machine disabledMachine = machineRepository.findById(machineId)
+            .orElseThrow(() -> new RuntimeException("Machine not found with id: " + machineId));
+
+        LocalDateTime now = LocalDateTime.now();
+
+        List<Booking> impacted = bookingRepository.findFutureBookingsForMachine(
+            machineId,
+            now,
+            BookingStatus.CANCELLED
+        );
+
+        int rescheduled = 0;
+        int cancelled = 0;
+
+        for (Booking booking : impacted) {
+            Optional<Machine> alternative = findAlternativeMachineForBooking(disabledMachine, booking);
+            if (alternative.isPresent()) {
+                booking.setMachine(alternative.get());
+                bookingRepository.save(booking);
+                rescheduled++;
+            } else {
+                booking.setStatus(BookingStatus.CANCELLED);
+                bookingRepository.save(booking);
+                cancelled++;
+            }
+        }
+
+        return new DisableMachineResult(impacted.size(), rescheduled, cancelled);
+    }
+
+    private Optional<Machine> findAlternativeMachineForBooking(Machine originalMachine, Booking booking) {
+        MachineType type = originalMachine.getType();
+        List<Machine> candidates = machineRepository.findByTypeAndEnabledTrue(type);
+
+        for (Machine candidate : candidates) {
+            if (candidate.getId().equals(originalMachine.getId())) {
+                continue;
+            }
+
+            boolean bookingOverlap = bookingRepository.existsOverlap(
+                candidate.getId(),
+                booking.getStartTime(),
+                booking.getEndTime(),
+                BookingStatus.CANCELLED
+            );
+            if (bookingOverlap) {
+                continue;
+            }
+
+            boolean maintenanceOverlap = maintenanceRepository.existsOverlap(
+                candidate.getId(),
+                booking.getStartTime(),
+                booking.getEndTime(),
+                MaintenanceStatus.CANCELLED
+            );
+            if (maintenanceOverlap) {
+                continue;
+            }
+
+            return Optional.of(candidate);
+        }
+
+        return Optional.empty();
     }
 }
