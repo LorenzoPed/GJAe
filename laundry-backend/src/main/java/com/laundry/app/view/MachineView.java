@@ -37,6 +37,9 @@ public class MachineView implements Serializable {
     private String editName;
     private MachineType editType;
 
+    private String newName;
+    private MachineType newType;
+
     private Long maintenanceMachineId;
     private String maintenanceMachineName;
     private LocalDateTime maintenanceStart;
@@ -111,6 +114,70 @@ public class MachineView implements Serializable {
                 FacesMessage.SEVERITY_ERROR,
                 "Error",
                 ex.getMessage()
+            ));
+        }
+    }
+
+    // This method is called from the Save button in the dialog
+    public void createMachine() {
+        try {
+            // 1. Creiamo l'oggetto qui nel Controller
+            Machine machine = new Machine();
+            machine.setName(this.newName);
+            machine.setType(this.newType);
+
+            // 2. Impostiamo i valori di default (importante!)
+            machine.setEnabled(true);
+
+            // 3. Chiamiamo il TUO metodo esistente del service
+            machineService.createMachine(machine);
+
+            // 4. Aggiorniamo la lista visualizzata
+            this.machines = machineService.getAllMachines();
+
+            // 5. Messaggio di successo
+            FacesContext.getCurrentInstance().addMessage(null,
+                    new FacesMessage(FacesMessage.SEVERITY_INFO, "Successo", "Nuova macchina aggiunta!"));
+
+            // Chiudiamo il dialog
+            PrimeFaces.current().ajax().addCallbackParam("success", true);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            FacesContext.getCurrentInstance().addMessage(null,
+                    new FacesMessage(FacesMessage.SEVERITY_ERROR, "Errore", "Impossibile salvare la macchina."));
+            PrimeFaces.current().ajax().addCallbackParam("success", false);
+        }
+    }
+
+    public void openCreate() {
+        this.newName = "";
+        this.newType = MachineType.WASHER; // Valore di default
+    }
+
+
+    public void deleteMachine(Machine machine) {
+        FacesContext faces = FacesContext.getCurrentInstance();
+
+        if (machine == null) return;
+
+        try {
+            String resultMessage = machineService.deleteMachine(machine.getId());
+
+            reloadMachines();
+
+            faces.addMessage(null, new FacesMessage(
+                    FacesMessage.SEVERITY_INFO,
+                    "Success",
+                    resultMessage
+            ));
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            faces.addMessage(null, new FacesMessage(
+                    FacesMessage.SEVERITY_ERROR,
+                    "Error",
+                    "Could not delete machine: " + e.getMessage()
             ));
         }
     }
@@ -335,6 +402,22 @@ public class MachineView implements Serializable {
 
     public MachineType[] getMachineTypes() {
         return MachineType.values();
+    }
+
+    public String getNewName() {
+        return newName;
+    }
+
+    public void setNewName(String newName) {
+        this.newName = newName;
+    }
+
+    public MachineType getNewType() {
+        return newType;
+    }
+
+    public void setNewType(MachineType newType) {
+        this.newType = newType;
     }
 
     public Long getMaintenanceMachineId() {

@@ -22,7 +22,7 @@ public class Booking {
 
     // RELATIONSHIP: Many bookings can belong to One machine
     @ManyToOne
-    @JoinColumn(name = "machine_id", nullable = false)
+    @JoinColumn(name = "machine_id", nullable = true)
     private Machine machine;
 
     // --- NEW CHANGE: Link to User ---

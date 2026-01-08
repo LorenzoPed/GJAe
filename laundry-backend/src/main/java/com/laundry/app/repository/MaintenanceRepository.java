@@ -12,6 +12,8 @@ import java.util.List;
 
 public interface MaintenanceRepository extends JpaRepository<Maintenance, Long> {
 
+    void deleteByMachineId(Long machineId);
+
     @Query("""
         SELECT COUNT(m) > 0
         FROM Maintenance m

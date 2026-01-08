@@ -157,6 +157,27 @@ public class BookingService {
         bookingRepository.save(booking);
     }
 
+    /**
+     * Cancella (soft delete) tutte le prenotazioni attive/future di un utente specifico.
+     * Usato dal Manager per ripulire i dati di uno studente.
+     */
+    @Transactional
+    public void cancelAllUserBookings(Long userId) {
+        // 1. Trova tutte le prenotazioni di questo utente
+        List<Booking> userBookings = bookingRepository.findByUserId(userId);
+
+        // 2. Itera su tutte le prenotazioni
+        for (Booking booking : userBookings) {
+            // Se la prenotazione non è già cancellata, impostala come CANCELLED
+            if (booking.getStatus() != BookingStatus.CANCELLED) {
+                booking.setStatus(BookingStatus.CANCELLED);
+            }
+        }
+
+        // 3. Salva le modifiche nel database
+        bookingRepository.saveAll(userBookings);
+    }
+
     public boolean isSlotAvailable(MachineType type, LocalDateTime start, LocalDateTime end) {
         long enabledMachines = machineRepository.countByTypeAndEnabledTrue(type);
         if (enabledMachines <= 0) {

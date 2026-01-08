@@ -76,6 +76,12 @@
 									style="font-weight: bold"
 								/>
 							</h:panelGroup>
+
+                            <h:panelGroup rendered="#{booking.machine == null}">
+                                <p:tag value="DELETED" severity="danger" style="margin-right: 5px"/>
+                                <h:outputText value="Machine Removed" style="color: #999; font-style: italic;"/>
+                            </h:panelGroup>
+
 						</p:column>
 
 						<p:column headerText="Status" style="width: 120px">

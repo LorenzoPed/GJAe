@@ -4,6 +4,7 @@ import com.laundry.app.dto.BookingRequest;
 import com.laundry.app.model.Booking;
 import com.laundry.app.model.BookingStatus;
 import com.laundry.app.model.MachineType;
+import com.laundry.app.model.User;
 import com.laundry.app.service.BookingService;
 import jakarta.annotation.PostConstruct;
 import jakarta.faces.application.FacesMessage;
@@ -166,6 +167,27 @@ public class BookingView implements Serializable {
             null,
             new FacesMessage(FacesMessage.SEVERITY_INFO, "Cancelled", "Booking cancelled")
         );
+    }
+
+    public void cancelAllBookingsForUser(User user) {
+        // Controllo di sicurezza: se l'utente è null, non facciamo nulla
+        if (user == null) return;
+
+        try {
+            bookingService.cancelAllUserBookings(user.getId());
+
+            this.allBookings = bookingService.getAllBookings();
+
+            FacesContext.getCurrentInstance().addMessage(null,
+                    new FacesMessage(FacesMessage.SEVERITY_INFO, "Operazione completata",
+                            "Tutte le prenotazioni di " + user.getUsername() + " sono state cancellate."));
+
+        } catch (Exception e) {
+            e.printStackTrace(); // Utile per vedere l'errore in console
+            FacesContext.getCurrentInstance().addMessage(null,
+                    new FacesMessage(FacesMessage.SEVERITY_ERROR, "Errore",
+                            "Impossibile cancellare le prenotazioni."));
+        }
     }
 
     public boolean isCancelled(Booking booking) {

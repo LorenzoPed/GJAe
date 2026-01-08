@@ -22,6 +22,8 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     List<Booking> findByUserId(Long userId);
 
+    void deleteByMachineId(Long machineId);
+
     @Query("""
         SELECT COUNT(b) > 0
         FROM Booking b
@@ -85,4 +87,6 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
         @Param("now") LocalDateTime now,
         @Param("excludedStatus") BookingStatus excludedStatus
     );
+
+
 }
