@@ -6,6 +6,7 @@ import com.laundry.app.model.MachineType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import com.laundry.app.model.User;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -17,6 +18,8 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     List<Booking> findByUser_UsernameAndStatusNot(String username, BookingStatus status);
 
     List<Booking> findByStatusNot(BookingStatus status);
+
+    List<Booking> findByUserOrderByStartTimeDesc(User user);
 
     List<Booking> findByMachineId(Long machineId);
 

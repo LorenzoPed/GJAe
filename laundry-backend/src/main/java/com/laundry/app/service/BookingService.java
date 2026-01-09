@@ -118,7 +118,9 @@ public class BookingService {
 
         return bookingRepository.save(booking);
     }
-
+    public List<Booking> getAllBookingsByUser(User user) {
+        return bookingRepository.findByUserOrderByStartTimeDesc(user);
+    }
     @Transactional(readOnly = true)
     public List<Booking> getAllBookings() {
         return bookingRepository.findAll();

@@ -6,6 +6,7 @@ import com.laundry.app.model.BookingStatus;
 import com.laundry.app.model.MachineType;
 import com.laundry.app.model.User;
 import com.laundry.app.service.BookingService;
+import com.laundry.app.repository.UserRepository;
 import jakarta.annotation.PostConstruct;
 import jakarta.faces.application.FacesMessage;
 import jakarta.faces.context.FacesContext;
@@ -32,6 +33,9 @@ public class BookingView implements Serializable {
 
     @Autowired
     private BookingService bookingService;
+
+    @Autowired
+    private UserRepository userRepository;
 
     private ScheduleModel eventModel;
 
@@ -150,7 +154,15 @@ public class BookingView implements Serializable {
     }
 
     public void loadMyBookings() {
-        myBookings = bookingService.getMyActiveBookings();
+        String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+
+        User currentUser = userRepository.findByUsername(currentUsername).orElse(null);
+
+        if (currentUser != null) {
+            myBookings = bookingService.getAllBookingsByUser(currentUser);
+        } else {
+            myBookings = new ArrayList<>();
+        }
     }
 
     public void loadAllBookings() {
