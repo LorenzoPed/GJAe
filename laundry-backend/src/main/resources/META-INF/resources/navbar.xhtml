@@ -8,6 +8,7 @@
 >
     <h:form id="navForm">
         <p:menubar style="margin-bottom: 20px">
+
             <p:menuitem
                     value="Dashboard"
                     icon="pi pi-cog"
@@ -29,6 +30,7 @@
                     value="My Bookings"
                     icon="pi pi-list"
                     url="/my-bookings.xhtml"
+                    rendered="#{!request.isUserInRole('MANAGER')}"
                     disabled="#{active eq 'mybookings'}"
                     style="#{active eq 'mybookings' ? 'font-weight: bold; opacity: 1 !important; color: #333 !important;' : ''}"
             />

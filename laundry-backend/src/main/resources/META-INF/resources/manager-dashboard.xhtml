@@ -29,7 +29,10 @@
 				<ui:param name="active" value="dashboard" />
 			</ui:include>
 
-			<h1 style="text-align: center; margin-top: 10px">🔧 Manager Dashboard</h1>
+			<h1 style="text-align: center; margin-top: 10px; color: #333;">
+				<i class="pi pi-cog" style="font-size: 1em; vertical-align: middle; margin-right: 10px;"></i>
+				Manager Dashboard
+			</h1>
 
 			<p:remoteCommand
 				name="rcReloadAllBookings"
@@ -48,7 +51,10 @@
 							border: 1px solid #ddd;
 						"
 					>
-						<h2 style="margin-top: 0; color: #555">🧺 Laundry Machines</h2>
+						<h2 style="margin-top: 0; color: #555">
+							<i class="pi pi-server" style="margin-right: 8px;"></i>
+							Laundry Machines
+						</h2>
 
                         <p:commandButton value="New Machine"
                                          icon="pi pi-plus"
@@ -446,7 +452,10 @@
 							border: 2px solid #e0e0e0;
 						"
 					>
-						<h2 style="margin-top: 0; color: #333">📅 All System Bookings</h2>
+						<h2 style="margin-top: 0; color: #333">
+							<i class="pi pi-list" style="margin-right: 8px;"></i>
+							All System Bookings
+						</h2>
 
 						<p:dataTable
 							id="dt-allbookings"
@@ -539,8 +548,8 @@
                                 </p:commandButton>
 
                                 <p:commandButton
-                                        icon="pi pi-trash"
-                                        styleClass="rounded-button ui-button-warning ui-button-flat"
+                                        icon="pi pi-user-minus"
+                                        styleClass="rounded-button ui-button-secondary ui-button-flat"
                                         style="margin-left: 5px"
                                         action="#{bookingView.cancelAllBookingsForUser(booking.user)}"
                                         update=":bookingsForm:dt-allbookings"
