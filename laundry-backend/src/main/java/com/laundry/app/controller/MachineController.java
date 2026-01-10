@@ -28,7 +28,12 @@ public class MachineController {
     @GetMapping("/{id}")
     public ResponseEntity<Machine> getMachineById(@PathVariable Long id) {
         // FIXED: Now calling 'getMachineById' instead of 'getMachine'
-        return ResponseEntity.ok(machineService.getMachineById(id));
+        Machine machine = machineService.getMachineById(id);
+        // Return 404 if not found to match controller tests
+        if (machine == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(machine);
     }
 
     // 3. Create machine
@@ -38,7 +43,7 @@ public class MachineController {
     }
 
     // 4. Update machine (Replaces the old updateMachineAvailability)
-    // Send the full object (e.g., {"name": "...", "enabled": false})
+    // Send the full object (e.g., {\"name\": \"...\", \"enabled\": false})
     @PutMapping("/{id}")
     public ResponseEntity<Machine> updateMachine(@PathVariable Long id, @RequestBody Machine machineDetails) {
         // FIXED: Now calling 'updateMachine' which handles both name and enabled status

@@ -1,9 +1,15 @@
+// java
 package com.laundry.app.laundry_backend.service;
 
 import com.laundry.app.model.Machine;
-import com.laundry.app.model.MachineType; // Assicurati di importare l'ENUM
+import com.laundry.app.model.MachineType;
+import com.laundry.app.model.Booking;
+import com.laundry.app.repository.BookingRepository;
 import com.laundry.app.repository.MachineRepository;
+import com.laundry.app.repository.MaintenanceRepository;
+import com.laundry.app.service.BookingService;
 import com.laundry.app.service.MachineService;
+import com.laundry.app.service.NotificationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,6 +31,20 @@ class MachineServiceTest {
     @Mock
     private MachineRepository machineRepository;
 
+    @Mock
+    private BookingRepository bookingRepository;
+
+    @Mock
+    private MaintenanceRepository maintenanceRepository;
+
+    // Mock BookingService to avoid NPE when MachineService calls it
+    @Mock
+    private BookingService bookingService;
+
+    // Mock NotificationService to avoid NPE when notifications are sent
+    @Mock
+    private NotificationService notificationService;
+
     @InjectMocks
     private MachineService machineService;
 
@@ -36,7 +56,6 @@ class MachineServiceTest {
         mockMachine.setId(1L);
         mockMachine.setName("Lavatrice A");
         mockMachine.setEnabled(true);
-        // NUOVO: Impostiamo il tipo iniziale
         mockMachine.setType(MachineType.WASHER);
     }
 
@@ -46,7 +65,7 @@ class MachineServiceTest {
         machine2.setId(2L);
         machine2.setName("Asciugatrice B");
         machine2.setEnabled(true);
-        machine2.setType(MachineType.DRYER); // Tipo diverso
+        machine2.setType(MachineType.DRYER);
 
         when(machineRepository.findAll()).thenReturn(Arrays.asList(mockMachine, machine2));
 
@@ -64,7 +83,7 @@ class MachineServiceTest {
 
         assertNotNull(result);
         assertEquals("Lavatrice A", result.getName());
-        assertEquals(MachineType.WASHER, result.getType()); // Verifica tipo
+        assertEquals(MachineType.WASHER, result.getType());
     }
 
     @Test
@@ -91,26 +110,20 @@ class MachineServiceTest {
 
     @Test
     void updateMachine_Success() {
-        // Arrange
         Machine updatedDetails = new Machine();
         updatedDetails.setName("Lavatrice A - Updated");
         updatedDetails.setEnabled(false);
-        // NUOVO: Proviamo a cambiare anche il tipo (es. era sbagliato) o verifichiamo che rimanga
         updatedDetails.setType(MachineType.DRYER);
 
         when(machineRepository.findById(1L)).thenReturn(Optional.of(mockMachine));
-
-        // Mockiamo il save per ritornare l'oggetto aggiornato
         when(machineRepository.save(any(Machine.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        // Act
         Machine result = machineService.updateMachine(1L, updatedDetails);
 
-        // Assert
         assertNotNull(result);
         assertEquals("Lavatrice A - Updated", result.getName());
         assertFalse(result.isEnabled());
-        assertEquals(MachineType.DRYER, result.getType()); // Verifichiamo il cambio tipo
+        assertEquals(MachineType.DRYER, result.getType());
 
         verify(machineRepository).save(any(Machine.class));
     }
@@ -119,8 +132,19 @@ class MachineServiceTest {
     void deleteMachine_Success() {
         when(machineRepository.existsById(1L)).thenReturn(true);
 
+        // Stub bookingService.handleMachineDisabled to return a safe mock result
+        BookingService.DisableMachineResult mockResult = mock(BookingService.DisableMachineResult.class);
+        when(mockResult.getRescheduledBookings()).thenReturn(0);
+        when(bookingService.handleMachineDisabled(1L)).thenReturn(mockResult);
+
+        // Ensure bookingRepository returns an empty list (no remaining bookings)
+        when(bookingRepository.findByMachineId(1L)).thenReturn(List.of());
+
+        // Call the method under test
         machineService.deleteMachine(1L);
 
         verify(machineRepository, times(1)).deleteById(1L);
+        verify(maintenanceRepository, times(1)).deleteByMachineId(1L);
+        verify(bookingRepository, times(1)).findByMachineId(1L);
     }
 }
