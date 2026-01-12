@@ -51,17 +51,20 @@ public class BookingService {
     private final MachineRepository machineRepository;
     private final UserRepository userRepository;
     private final MaintenanceRepository maintenanceRepository;
+    private final NotificationService notificationService; // <--- 1. NUOVO SERVIZIO
 
     public BookingService(
-        BookingRepository bookingRepository,
-        MachineRepository machineRepository,
-        UserRepository userRepository,
-        MaintenanceRepository maintenanceRepository
+            BookingRepository bookingRepository,
+            MachineRepository machineRepository,
+            UserRepository userRepository,
+            MaintenanceRepository maintenanceRepository,
+            NotificationService notificationService // <--- 1. INIEZIONE NEL COSTRUTTORE
     ) {
         this.bookingRepository = bookingRepository;
         this.machineRepository = machineRepository;
         this.userRepository = userRepository;
         this.maintenanceRepository = maintenanceRepository;
+        this.notificationService = notificationService;
     }
 
     public Booking createBooking(BookingRequest request) {
@@ -79,24 +82,24 @@ public class BookingService {
 
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         User user = userRepository.findByUsername(username)
-            .orElseThrow(() -> new UsernameNotFoundException("User not found."));
+                .orElseThrow(() -> new UsernameNotFoundException("User not found."));
 
         List<Machine> candidates = machineRepository.findByTypeAndEnabledTrue(request.getMachineType());
 
         Machine selectedMachine = null;
         for (Machine machine : candidates) {
             boolean isOccupied = bookingRepository.existsOverlap(
-                machine.getId(),
-                request.getStartTime(),
-                request.getEndTime(),
-                BookingStatus.CANCELLED
+                    machine.getId(),
+                    request.getStartTime(),
+                    request.getEndTime(),
+                    BookingStatus.CANCELLED
             );
 
             boolean isUnderMaintenance = maintenanceRepository.existsOverlap(
-                machine.getId(),
-                request.getStartTime(),
-                request.getEndTime(),
-                MaintenanceStatus.CANCELLED
+                    machine.getId(),
+                    request.getStartTime(),
+                    request.getEndTime(),
+                    MaintenanceStatus.CANCELLED
             );
 
             if (!isOccupied && !isUnderMaintenance) {
@@ -118,9 +121,11 @@ public class BookingService {
 
         return bookingRepository.save(booking);
     }
+
     public List<Booking> getAllBookingsByUser(User user) {
         return bookingRepository.findByUserOrderByStartTimeDesc(user);
     }
+
     @Transactional(readOnly = true)
     public List<Booking> getAllBookings() {
         return bookingRepository.findAll();
@@ -139,13 +144,13 @@ public class BookingService {
 
     public void cancelBooking(Long bookingId) {
         Booking booking = bookingRepository.findById(bookingId)
-            .orElseThrow(() -> new RuntimeException("Booking not found with id: " + bookingId));
+                .orElseThrow(() -> new RuntimeException("Booking not found with id: " + bookingId));
 
         String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
 
         boolean isManager = SecurityContextHolder.getContext().getAuthentication()
-            .getAuthorities().stream()
-            .anyMatch(a -> a.getAuthority().equals("ROLE_MANAGER"));
+                .getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_MANAGER"));
 
         if (!booking.getUser().getUsername().equals(currentUsername) && !isManager) {
             throw new RuntimeException("You are not authorized to cancel this booking.");
@@ -165,18 +170,12 @@ public class BookingService {
      */
     @Transactional
     public void cancelAllUserBookings(Long userId) {
-        // 1. Trova tutte le prenotazioni di questo utente
         List<Booking> userBookings = bookingRepository.findByUserId(userId);
-
-        // 2. Itera su tutte le prenotazioni
         for (Booking booking : userBookings) {
-            // Se la prenotazione non è già cancellata, impostala come CANCELLED
             if (booking.getStatus() != BookingStatus.CANCELLED) {
                 booking.setStatus(BookingStatus.CANCELLED);
             }
         }
-
-        // 3. Salva le modifiche nel database
         bookingRepository.saveAll(userBookings);
     }
 
@@ -187,10 +186,10 @@ public class BookingService {
         }
 
         long machinesUnderMaintenance = maintenanceRepository.countMachinesWithOverlappingMaintenanceByType(
-            type,
-            start,
-            end,
-            MaintenanceStatus.CANCELLED
+                type,
+                start,
+                end,
+                MaintenanceStatus.CANCELLED
         );
 
         long availableMachines = enabledMachines - machinesUnderMaintenance;
@@ -199,10 +198,10 @@ public class BookingService {
         }
 
         long activeBookings = bookingRepository.countConflictingBookings(
-            type,
-            start,
-            end,
-            BookingStatus.CANCELLED
+                type,
+                start,
+                end,
+                BookingStatus.CANCELLED
         );
 
         return activeBookings < availableMachines;
@@ -219,9 +218,10 @@ public class BookingService {
     }
 
     /**
-     * Called when a manager disables a machine.
+     * Called when a manager disables a machine OR deletes it.
      * Reschedules future bookings to another enabled machine of the same type when possible.
      * Otherwise cancels them.
+     * Sends NOTIFICATIONS to users in both cases.
      */
     @Transactional
     public DisableMachineResult handleMachineDisabled(Long machineId) {
@@ -230,14 +230,14 @@ public class BookingService {
         }
 
         Machine disabledMachine = machineRepository.findById(machineId)
-            .orElseThrow(() -> new RuntimeException("Machine not found with id: " + machineId));
+                .orElseThrow(() -> new RuntimeException("Machine not found with id: " + machineId));
 
         LocalDateTime now = LocalDateTime.now();
 
         List<Booking> impacted = bookingRepository.findFutureBookingsForMachine(
-            machineId,
-            now,
-            BookingStatus.CANCELLED
+                machineId,
+                now,
+                BookingStatus.CANCELLED
         );
 
         int rescheduled = 0;
@@ -245,14 +245,34 @@ public class BookingService {
 
         for (Booking booking : impacted) {
             Optional<Machine> alternative = findAlternativeMachineForBooking(disabledMachine, booking);
+
             if (alternative.isPresent()) {
-                booking.setMachine(alternative.get());
+                // --- SUCCESSO: RISCHEDULATA ---
+                Machine newMachine = alternative.get();
+                booking.setMachine(newMachine);
                 bookingRepository.save(booking);
                 rescheduled++;
+
+                // 2. Notifica di Spostamento
+                String msg = String.format(
+                        "UPDATE: Your booking on %s has been moved to machine '%s' because the original one is unavailable.",
+                        booking.getStartTime().toLocalDate(),
+                        newMachine.getName()
+                );
+                notificationService.sendNotification(booking.getUser(), msg);
+
             } else {
+                // --- FALLIMENTO: CANCELLATA ---
                 booking.setStatus(BookingStatus.CANCELLED);
                 bookingRepository.save(booking);
                 cancelled++;
+
+                // 2. Notifica di Cancellazione
+                String msg = String.format(
+                        "ALERT: Your booking on %s has been CANCELLED. The machine is out of order/removed and no other machines are available at that time.",
+                        booking.getStartTime().toLocalDate()
+                );
+                notificationService.sendNotification(booking.getUser(), msg);
             }
         }
 
@@ -269,20 +289,20 @@ public class BookingService {
             }
 
             boolean bookingOverlap = bookingRepository.existsOverlap(
-                candidate.getId(),
-                booking.getStartTime(),
-                booking.getEndTime(),
-                BookingStatus.CANCELLED
+                    candidate.getId(),
+                    booking.getStartTime(),
+                    booking.getEndTime(),
+                    BookingStatus.CANCELLED
             );
             if (bookingOverlap) {
                 continue;
             }
 
             boolean maintenanceOverlap = maintenanceRepository.existsOverlap(
-                candidate.getId(),
-                booking.getStartTime(),
-                booking.getEndTime(),
-                MaintenanceStatus.CANCELLED
+                    candidate.getId(),
+                    booking.getStartTime(),
+                    booking.getEndTime(),
+                    MaintenanceStatus.CANCELLED
             );
             if (maintenanceOverlap) {
                 continue;
