@@ -29,8 +29,11 @@
 				<ui:param name="active" value="dashboard" />
 			</ui:include>
 
-			<h1 style="text-align: center; margin-top: 10px; color: #333;">
-				<i class="pi pi-cog" style="font-size: 1em; vertical-align: middle; margin-right: 10px;"></i>
+			<h1 style="text-align: center; margin-top: 10px; color: #333">
+				<i
+					class="pi pi-cog"
+					style="font-size: 1em; vertical-align: middle; margin-right: 10px"
+				></i>
 				Manager Dashboard
 			</h1>
 
@@ -52,16 +55,18 @@
 						"
 					>
 						<h2 style="margin-top: 0; color: #555">
-							<i class="pi pi-server" style="margin-right: 8px;"></i>
+							<i class="pi pi-server" style="margin-right: 8px"></i>
 							Laundry Machines
 						</h2>
 
-                        <p:commandButton value="New Machine"
-                                         icon="pi pi-plus"
-                                         actionListener="#{machineView.openCreate}"
-                                         update=":createMachineForm:createMachineDialog"
-                                         oncomplete="PF('createMachineDialog').show()"
-                                         styleClass="ui-button-success" />
+						<p:commandButton
+							value="New Machine"
+							icon="pi pi-plus"
+							actionListener="#{machineView.openCreate}"
+							update=":createMachineForm:createMachineDialog"
+							oncomplete="PF('createMachineDialog').show()"
+							styleClass="ui-button-success"
+						/>
 
 						<!-- Only GLOBAL messages (so input required/validation will not show here) -->
 						<p:messages
@@ -149,64 +154,99 @@
 									/>
 								</p:commandButton>
 
-                                <p:commandButton
-                                        icon="pi pi-trash"
-                                        styleClass="rounded-button ui-button-flat ui-button-danger"
-                                        title="Delete Machine"
-                                        action="#{machineView.deleteMachine(machine)}"
-                                        update=":machinesForm:machinesTable :machinesForm:machineMessages"
-                                        process="@this"
-                                >
-                                <p:confirm
-                                        header="Delete Machine"
-                                        message="WARNING: This will delete the machine. Future bookings will be automatically rescheduled if possible; otherwise, they will be cancelled. All maintenance will be removed. Do you want to proceed?"
-                                        icon="pi pi-exclamation-triangle"
-                                />
-                                </p:commandButton>
-
+								<p:commandButton
+									icon="pi pi-trash"
+									styleClass="rounded-button ui-button-flat ui-button-danger"
+									title="Delete Machine"
+									action="#{machineView.deleteMachine(machine)}"
+									update=":machinesForm:machinesTable :machinesForm:machineMessages"
+									process="@this"
+								>
+									<p:confirm
+										header="Delete Machine"
+										message="WARNING: This will delete the machine. Future bookings will be automatically rescheduled if possible; otherwise, they will be cancelled. All maintenance will be removed. Do you want to proceed?"
+										icon="pi pi-exclamation-triangle"
+									/>
+								</p:commandButton>
 							</p:column>
 						</p:dataTable>
 					</div>
 				</h:form>
 
+				<h:form id="createMachineForm">
+					<p:dialog
+						id="createMachineDialog"
+						widgetVar="createMachineDialog"
+						header="Add New Machine"
+						modal="true"
+						responsive="true"
+						appendTo="@form"
+						focusOnShow="true"
+						showEffect="fade"
+						hideEffect="fade"
+						closable="true"
+						width="400"
+					>
+						<p:messages
+							id="createMessages"
+							showDetail="true"
+							closable="true"
+							style="margin-bottom: 10px"
+						/>
 
-                <h:form id="createMachineForm">
-                    <p:dialog id="createMachineDialog" widgetVar="createMachineDialog"
-                              header="Add New Machine" modal="true" responsive="true"
-                              appendTo="@form" focusOnShow="true"
-                              showEffect="fade" hideEffect="fade" closable="true" width="400">
+						<h:panelGrid columns="2" cellpadding="5" style="width: 100%">
+							<h:outputLabel
+								for="newName"
+								value="Name:"
+								style="font-weight: bold"
+							/>
+							<p:inputText
+								id="newName"
+								value="#{machineView.newName}"
+								required="true"
+								requiredMessage="Name is required"
+								style="width: 100%"
+							/>
 
-                        <p:messages id="createMessages" showDetail="true" closable="true" style="margin-bottom:10px"/>
+							<h:outputLabel
+								for="newType"
+								value="Type:"
+								style="font-weight: bold"
+							/>
+							<p:selectOneMenu
+								id="newType"
+								value="#{machineView.newType}"
+								style="width: 100%"
+							>
+								<f:selectItems
+									value="#{machineView.machineTypes}"
+									var="t"
+									itemLabel="#{t}"
+									itemValue="#{t}"
+								/>
+							</p:selectOneMenu>
+						</h:panelGrid>
 
-                        <h:panelGrid columns="2" cellpadding="5" style="width: 100%">
+						<f:facet name="footer">
+							<p:commandButton
+								value="Save"
+								icon="pi pi-check"
+								action="#{machineView.createMachine}"
+								update="createMessages :machinesForm:machinesTable :machinesForm:machineMessages"
+								oncomplete="if (args &amp;&amp; args.success) { PF('createMachineDialog').hide(); rcReloadAllBookings(); }"
+								styleClass="ui-button-primary"
+							/>
 
-                            <h:outputLabel for="newName" value="Name:" style="font-weight:bold"/>
-                            <p:inputText id="newName" value="#{machineView.newName}"
-                                         required="true" requiredMessage="Name is required"
-                                         style="width: 100%"/>
-
-                            <h:outputLabel for="newType" value="Type:" style="font-weight:bold"/>
-                            <p:selectOneMenu id="newType" value="#{machineView.newType}" style="width: 100%">
-                                <f:selectItems value="#{machineView.machineTypes}" var="t"
-                                               itemLabel="#{t}" itemValue="#{t}"/>
-                            </p:selectOneMenu>
-
-                        </h:panelGrid>
-
-                        <f:facet name="footer">
-                            <p:commandButton value="Save" icon="pi pi-check"
-                                             action="#{machineView.createMachine}"
-                                             update="createMessages :machinesForm:machinesTable :machinesForm:machineMessages"
-                                             oncomplete="if (args &amp;&amp; args.success) { PF('createMachineDialog').hide(); rcReloadAllBookings(); }"
-                                             styleClass="ui-button-primary"/>
-
-                            <p:commandButton value="Cancel" icon="pi pi-times"
-                                             onclick="PF('createMachineDialog').hide()"
-                                             type="button"
-                                             styleClass="ui-button-secondary ui-button-flat"/>
-                        </f:facet>
-                    </p:dialog>
-                </h:form>
+							<p:commandButton
+								value="Cancel"
+								icon="pi pi-times"
+								onclick="PF('createMachineDialog').hide()"
+								type="button"
+								styleClass="ui-button-secondary ui-button-flat"
+							/>
+						</f:facet>
+					</p:dialog>
+				</h:form>
 
 				<!-- EDIT DIALOG -->
 				<h:form id="editForm">
@@ -453,7 +493,7 @@
 						"
 					>
 						<h2 style="margin-top: 0; color: #333">
-							<i class="pi pi-list" style="margin-right: 8px;"></i>
+							<i class="pi pi-list" style="margin-right: 8px"></i>
 							All System Bookings
 						</h2>
 
@@ -487,17 +527,23 @@
 								/>
 							</p:column>
 
-                            <p:column headerText="Machine" sortBy="#{booking.machine.name}"
-                                      filterBy="#{booking.machine.name}" filterMatchMode="contains">
+							<p:column
+								headerText="Machine"
+								sortBy="#{booking.machine.name}"
+								filterBy="#{booking.machine.name}"
+								filterMatchMode="contains"
+							>
+								<h:outputText
+									value="#{booking.machine.name}"
+									rendered="#{booking.machine != null}"
+								/>
 
-                                <h:outputText value="#{booking.machine.name}"
-                                              rendered="#{booking.machine != null}" />
-
-                                <h:outputText value="[DELETED MACHINE]"
-                                              rendered="#{booking.machine == null}"
-                                              style="color: #999; font-style: italic;" />
-
-                            </p:column>
+								<h:outputText
+									value="[DELETED MACHINE]"
+									rendered="#{booking.machine == null}"
+									style="color: #999; font-style: italic"
+								/>
+							</p:column>
 
 							<p:column headerText="Start Time" sortBy="#{booking.startTime}">
 								<h:outputText
@@ -530,40 +576,41 @@
 								/>
 							</p:column>
 
-                            <p:column headerText="Actions" style="width: 140px; text-align: center">
+							<p:column
+								headerText="Actions"
+								style="width: 140px; text-align: center"
+							>
+								<p:commandButton
+									icon="pi pi-times"
+									styleClass="rounded-button ui-button-danger ui-button-flat"
+									action="#{bookingView.cancelBooking(booking.id)}"
+									update=":bookingsForm:dt-allbookings"
+									title="Cancel Single Booking"
+									disabled="#{booking.status == 'CANCELLED'}"
+								>
+									<p:confirm
+										header="Sigle confirmation"
+										message="Do you want to delete this booking?"
+										icon="pi pi-exclamation-triangle"
+									/>
+								</p:commandButton>
 
-                                <p:commandButton
-                                        icon="pi pi-times"
-                                        styleClass="rounded-button ui-button-danger ui-button-flat"
-                                        action="#{bookingView.cancelBooking(booking.id)}"
-                                        update=":bookingsForm:dt-allbookings"
-                                        title="Cancel Single Booking"
-                                        disabled="#{booking.status == 'CANCELLED'}"
-                                >
-                                    <p:confirm
-                                            header="Sigle confirmation"
-                                            message="Do you want to delete this booking?"
-                                            icon="pi pi-exclamation-triangle"
-                                    />
-                                </p:commandButton>
-
-                                <p:commandButton
-                                        icon="pi pi-user-minus"
-                                        styleClass="rounded-button ui-button-secondary ui-button-flat"
-                                        style="margin-left: 5px"
-                                        action="#{bookingView.cancelAllBookingsForUser(booking.user)}"
-                                        update=":bookingsForm:dt-allbookings"
-                                        title="DELETE EVERYTHING for #{booking.user.username}"
-                                        disabled="#{booking.status == 'CANCELLED'}"
-                                >
-                                    <p:confirm
-                                            header="WARNING: Delete All Bookings"
-                                            message="You are about to cancel ALL bookings (current and future) for user #{booking.user.username}. This action cannot be undone. Do you want to proceed?"
-                                            icon="pi pi-exclamation-circle"
-                                    />
-                                </p:commandButton>
-
-                            </p:column>
+								<p:commandButton
+									icon="pi pi-user-minus"
+									styleClass="rounded-button ui-button-secondary ui-button-flat"
+									style="margin-left: 5px"
+									action="#{bookingView.cancelAllBookingsForUser(booking.user)}"
+									update=":bookingsForm:dt-allbookings"
+									title="DELETE EVERYTHING for #{booking.user.username}"
+									disabled="#{booking.status == 'CANCELLED'}"
+								>
+									<p:confirm
+										header="WARNING: Delete All Bookings"
+										message="You are about to cancel ALL bookings (current and future) for user #{booking.user.username}. This action cannot be undone. Do you want to proceed?"
+										icon="pi pi-exclamation-circle"
+									/>
+								</p:commandButton>
+							</p:column>
 						</p:dataTable>
 					</div>
 

@@ -137,7 +137,7 @@ public class MachineView implements Serializable {
 
             // 5. Messaggio di successo
             FacesContext.getCurrentInstance().addMessage(null,
-                    new FacesMessage(FacesMessage.SEVERITY_INFO, "Successo", "Nuova macchina aggiunta!"));
+                    new FacesMessage(FacesMessage.SEVERITY_INFO, "Success", "New machine added !"));
 
             // Chiudiamo il dialog
             PrimeFaces.current().ajax().addCallbackParam("success", true);
@@ -145,14 +145,14 @@ public class MachineView implements Serializable {
         } catch (Exception e) {
             e.printStackTrace();
             FacesContext.getCurrentInstance().addMessage(null,
-                    new FacesMessage(FacesMessage.SEVERITY_ERROR, "Errore", "Impossibile salvare la macchina."));
+                    new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error", "Could not save the machine."));
             PrimeFaces.current().ajax().addCallbackParam("success", false);
         }
     }
 
     public void openCreate() {
         this.newName = "";
-        this.newType = MachineType.WASHER; // Valore di default
+        this.newType = MachineType.WASHER; // Default type
     }
 
 
