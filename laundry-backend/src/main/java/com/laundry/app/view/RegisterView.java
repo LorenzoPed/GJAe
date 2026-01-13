@@ -1,5 +1,5 @@
 // java
-package com.laundry.app.controller;
+package com.laundry.app.view;
 
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
@@ -14,7 +14,7 @@ import com.laundry.app.model.User;
 @Data
 @Named
 @RequestScoped
-public class RegisterController {
+public class RegisterView {
     private String username;
     private String password;
     private String email;

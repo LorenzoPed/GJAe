@@ -51,19 +51,19 @@
         <h:form id="registerForm">
             <div class="field" style="margin-bottom: 20px;">
                 <span class="ui-float-label">
-                    <p:inputText id="username" value="#{registerController.username}" required="true" style="width: 100%"/>
+                    <p:inputText id="username" value="#{registerView.username}" required="true" style="width: 100%"/>
                     <p:outputLabel for="@previous" value="Username"/>
                 </span>
             </div>
             <div class="field" style="margin-bottom: 20px;">
                 <span class="ui-float-label">
-                    <p:inputText id="email" value="#{registerController.email}" required="true" style="width: 100%"/>
+                    <p:inputText id="email" value="#{registerView.email}" required="true" style="width: 100%"/>
                     <p:outputLabel for="@previous" value="Email"/>
                 </span>
             </div>
             <div class="field" style="margin-bottom: 30px;">
                 <span class="ui-float-label">
-                    <p:password id="password" value="#{registerController.password}" required="true" toggleMask="true" style="width: 100%"/>
+                    <p:password id="password" value="#{registerView.password}" required="true" toggleMask="true" style="width: 100%"/>
                     <p:outputLabel for="@previous" value="Password"/>
                 </span>
             </div>
@@ -74,7 +74,7 @@
                           styleClass="back-btn"
                           title="Back to login" />
                 <p:commandButton value="Register"
-                                 action="#{registerController.register}"
+                                 action="#{registerView.register}"
                                  icon="pi pi-user-plus"
                                  styleClass="register-btn"
                                  ajax="false" />

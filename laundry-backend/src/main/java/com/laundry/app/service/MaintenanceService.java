@@ -68,7 +68,7 @@ public class MaintenanceService {
     private final MaintenanceRepository maintenanceRepository;
     private final MachineRepository machineRepository;
     private final BookingRepository bookingRepository;
-    private final NotificationService notificationService; // <--- 1. NUOVO
+    private final NotificationService notificationService;
 
     /**
      * Construct the maintenance service with required repositories and notification service.
@@ -77,7 +77,7 @@ public class MaintenanceService {
             MaintenanceRepository maintenanceRepository,
             MachineRepository machineRepository,
             BookingRepository bookingRepository,
-            NotificationService notificationService // <--- 1. INIEZIONE
+            NotificationService notificationService
     ) {
         this.maintenanceRepository = maintenanceRepository;
         this.machineRepository = machineRepository;

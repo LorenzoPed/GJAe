@@ -49,18 +49,6 @@ public class SecurityConfig {
                 .requestMatchers("/manager-dashboard.xhtml").hasRole("MANAGER")
                 .requestMatchers("/home.xhtml", "/my-bookings.xhtml", "/index.xhtml").authenticated()
 
-                .requestMatchers(HttpMethod.GET, "/api/machines/**").authenticated()
-                .requestMatchers(HttpMethod.POST, "/api/machines/**").hasRole("MANAGER")
-                .requestMatchers(HttpMethod.PUT, "/api/machines/**").hasRole("MANAGER")
-                .requestMatchers(HttpMethod.DELETE, "/api/machines/**").hasRole("MANAGER")
-
-                .requestMatchers(HttpMethod.POST, "/api/bookings").authenticated()
-                .requestMatchers(HttpMethod.GET, "/api/bookings/my").authenticated()
-                .requestMatchers(HttpMethod.DELETE, "/api/bookings/**").authenticated()
-                .requestMatchers(HttpMethod.GET, "/api/bookings").hasRole("MANAGER")
-
-                .requestMatchers("/users/**").hasRole("MANAGER")
-
                 .anyRequest().authenticated()
             )
             .formLogin(form -> form
