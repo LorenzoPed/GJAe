@@ -25,7 +25,7 @@ public class NotificationView implements Serializable {
     private NotificationService notificationService;
 
     @Autowired
-    private UserRepository userRepository; // <--- Ci serve questo per trovare l'ID
+    private UserRepository userRepository;
 
     private List<Notification> unreadNotifications;
 
@@ -41,15 +41,15 @@ public class NotificationView implements Serializable {
      * Load unread notifications for the currently authenticated user.
      */
     public void loadNotifications() {
-        // 1. Prendi lo username di chi è loggato ora
+        // 1. Get username of currently logged user
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
 
-        // 2. Cerca l'utente nel DB usando lo username
+        // 2. Search for the user in the DB
         Optional<User> userOpt = userRepository.findByUsername(username);
 
-        // 3. Se l'utente esiste, prendi il suo ID e carica le notifiche
+        // 3. If user exists, take his ID and load notifications
         if (userOpt.isPresent()) {
-            Long userId = userOpt.get().getId(); // <--- Ora userId è inizializzato!
+            Long userId = userOpt.get().getId();
             this.unreadNotifications = notificationService.getUnreadNotifications(userId);
         }
     }
@@ -62,7 +62,7 @@ public class NotificationView implements Serializable {
     public void markRead(Notification n) {
         if (n != null) {
             notificationService.markAsRead(n.getId());
-            loadNotifications(); // Ricarica la lista per aggiornare il numero
+            loadNotifications(); // Load list to update the number
         }
     }
 

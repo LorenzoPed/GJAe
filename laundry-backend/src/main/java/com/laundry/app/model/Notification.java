@@ -14,12 +14,12 @@ public class Notification {
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
-    private User user; // Chi riceve il messaggio
+    private User user;
 
     @Column(nullable = false)
     private String message;
 
-    private boolean isRead = false; // Per sapere se l'ha già letta
+    private boolean isRead = false;
 
     private LocalDateTime createdAt = LocalDateTime.now();
 

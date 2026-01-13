@@ -156,25 +156,25 @@ public class MachineView implements Serializable {
     // This method is called from the Save button in the dialog
     public void createMachine() {
         try {
-            // 1. Creiamo l'oggetto qui nel Controller
+            // 1. Create the object machine
             Machine machine = new Machine();
             machine.setName(this.newName);
             machine.setType(this.newType);
 
-            // 2. Impostiamo i valori di default (importante!)
+            // 2. Set default values
             machine.setEnabled(true);
 
-            // 3. Chiamiamo il TUO metodo esistente del service
+            // 3. Call MachineService method
             machineService.createMachine(machine);
 
-            // 4. Aggiorniamo la lista visualizzata
+            // 4. Update the list shown in the dashboard
             this.machines = machineService.getAllMachines();
 
-            // 5. Messaggio di successo
+            // 5. Succes message
             FacesContext.getCurrentInstance().addMessage(null,
                     new FacesMessage(FacesMessage.SEVERITY_INFO, "Success", "New machine added !"));
 
-            // Chiudiamo il dialog
+            // Close dialog
             PrimeFaces.current().ajax().addCallbackParam("success", true);
 
         } catch (Exception e) {
@@ -196,8 +196,10 @@ public class MachineView implements Serializable {
         if (machine == null) return;
 
         try {
+            //Call MachineService method
             String resultMessage = machineService.deleteMachine(machine.getId());
 
+            //Update the view
             reloadMachines();
 
             faces.addMessage(null, new FacesMessage(

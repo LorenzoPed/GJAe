@@ -131,7 +131,6 @@ public class MaintenanceService {
                 BookingStatus.CANCELLED
         );
 
-        // Qui chiamiamo il metodo helper che ora invia anche le notifiche
         MaintenanceResult result = rescheduleOrCancelBookings(machine, impacted);
 
         String normalizedReason = (reason == null || reason.trim().isEmpty()) ? null : reason.trim();
@@ -232,13 +231,12 @@ public class MaintenanceService {
             Optional<Machine> alternative = findAlternativeMachineForBooking(originalMachine, booking);
 
             if (alternative.isPresent()) {
-                // --- SUCCESSO: Spostiamo la prenotazione ---
+
                 Machine newMachine = alternative.get();
                 booking.setMachine(newMachine);
                 bookingRepository.save(booking);
                 rescheduled++;
 
-                // NOTIFICA RISCHEDULAZIONE
                 String msg = String.format(
                         "UPDATE: Your booking on %s has been moved to machine '%s' due to scheduled maintenance.",
                         booking.getStartTime().toLocalDate(),
@@ -247,12 +245,11 @@ public class MaintenanceService {
                 notificationService.sendNotification(booking.getUser(), msg);
 
             } else {
-                // --- FALLIMENTO: Cancelliamo la prenotazione ---
+
                 booking.setStatus(BookingStatus.CANCELLED);
                 bookingRepository.save(booking);
                 cancelled++;
 
-                // NOTIFICA CANCELLAZIONE
                 String msg = String.format(
                         "ALERT: Your booking on %s has been CANCELLED due to scheduled maintenance on the machine. No alternatives were available.",
                         booking.getStartTime().toLocalDate()

@@ -85,26 +85,22 @@ public class MachineService {
             throw new RuntimeException("Machine not found with id: " + id);
         }
 
-        // 1. DELEGA AL BOOKING SERVICE
-        // Questo metodo ora sposta, cancella e INVIA LE NOTIFICHE.
+        // 1. Call to Booking Service method to handle reservations
         BookingService.DisableMachineResult result = bookingService.handleMachineDisabled(id);
 
-        // 2. ELIMINA LE MANUTENZIONI
+        // 2. Delete mantainances
         maintenanceRepository.deleteByMachineId(id);
 
-        // 3. PULIZIA TECNICA (Unlink)
-        // Prendiamo le prenotazioni che sono ancora collegate a questa macchina
-        // (es. prenotazioni passate, o quelle appena cancellate da handleMachineDisabled).
+        //Get remaining bookings (e.g. in the past)
         List<Booking> remainingBookings = bookingRepository.findByMachineId(id);
 
         for (Booking booking : remainingBookings) {
-            // Se non è già cancellata/completata, la cancelliamo (sicurezza extra)
+
             if (booking.getStatus() != BookingStatus.CANCELLED && booking.getStatus() != BookingStatus.COMPLETED) {
                 booking.setStatus(BookingStatus.CANCELLED);
             }
 
-            // FONDAMENTALE: Scolleghiamo la macchina (machine_id = NULL)
-            // Senza questo, il database impedirebbe l'eliminazione della macchina.
+            // machine_id = NULL
             booking.setMachine(null);
         }
 
@@ -148,13 +144,13 @@ public class MachineService {
      * @param machineDetails new machine data
      * @return updated machine
      */
-    @Transactional // Aggiungi Transactional perché facciamo modifiche multiple
+    @Transactional
     public Machine updateMachine(Long id, Machine machineDetails) {
         Machine existingMachine = getMachineById(id);
 
-        // CONTROLLO CAMBIO STATO: Da Abilitata (true) a Disabilitata (false)
         if (existingMachine.isEnabled() && !machineDetails.isEnabled()) {
-            // La macchina sta per essere disabilitata: spostiamo le prenotazioni e avvisiamo gli utenti!
+
+            //Move bookings
             bookingService.handleMachineDisabled(id);
         }
 
