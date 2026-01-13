@@ -28,6 +28,9 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * JSF view backing bean for the booking calendar and user interactions (create/delete/view bookings).
+ */
 @Named
 @ViewScoped
 public class BookingView implements Serializable {
@@ -40,20 +43,27 @@ public class BookingView implements Serializable {
 
     private ScheduleModel eventModel;
 
-    // Inizializziamo l'evento per evitare NullPointerException
     private ScheduleEvent<?> event = new DefaultScheduleEvent<>();
 
     private LocalDate clickedDate;
+
     private LocalTime startTime;
+
     private LocalTime endTime;
+
     private MachineType selectedType;
 
     private List<Booking> myBookings;
+
     private List<Booking> allBookings;
+
     private List<Booking> filteredBookings;
 
     private List<SelectItem> machineTypeOptions;
 
+    /**
+     * Initialize view: prepare schedule model and load bookings.
+     */
     @PostConstruct
     public void init() {
         eventModel = new DefaultScheduleModel();
@@ -62,6 +72,9 @@ public class BookingView implements Serializable {
         loadAllBookings();
     }
 
+    /**
+     * Load the schedule events based on current user role and bookings.
+     */
     public void loadSchedule() {
         eventModel.clear();
 
@@ -119,10 +132,18 @@ public class BookingView implements Serializable {
         }
     }
 
+    /**
+     * Handle selection of an event in the calendar.
+     *
+     * @param selectEvent event selected in the UI
+     */
     public void onEventSelect(SelectEvent<ScheduleEvent<?>> selectEvent) {
         this.event = selectEvent.getObject();
     }
 
+    /**
+     * Cancel the currently selected event (booking).
+     */
     public void deleteSelectedEvent() {
         if (event != null && event.getData() != null) {
             Long bookingId = (Long) event.getData();
@@ -169,6 +190,11 @@ public class BookingView implements Serializable {
         }
     }
 
+    /**
+     * Handle date selection from the calendar and prepare times.
+     *
+     * @param selectEvent selected date/time
+     */
     public void onDateSelect(SelectEvent<LocalDateTime> selectEvent) {
         LocalDateTime selected = selectEvent.getObject();
         clickedDate = selected.toLocalDate();
@@ -177,12 +203,18 @@ public class BookingView implements Serializable {
         updateAvailability();
     }
 
+    /**
+     * Invoked when start/end time fields change to update availability.
+     */
     public void onTimeChange() {
         if (clickedDate != null && startTime != null && endTime != null) {
             updateAvailability();
         }
     }
 
+    /**
+     * Create a new booking using the chosen date/time and machine type.
+     */
     public void createBooking() {
         try {
             LocalDateTime startDateTime = LocalDateTime.of(clickedDate, startTime);
@@ -206,6 +238,9 @@ public class BookingView implements Serializable {
         }
     }
 
+    /**
+     * Load bookings belonging to the current authenticated user.
+     */
     public void loadMyBookings() {
         String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
         User currentUser = userRepository.findByUsername(currentUsername).orElse(null);
@@ -216,8 +251,16 @@ public class BookingView implements Serializable {
         }
     }
 
+    /**
+     * Load all bookings (used for manager view).
+     */
     public void loadAllBookings() { allBookings = bookingService.getAllBookings(); }
 
+    /**
+     * Cancel a booking by id (delegates to service).
+     *
+     * @param id booking id
+     */
     public void cancelBooking(Long id) {
         bookingService.cancelBooking(id);
         loadSchedule();
@@ -227,6 +270,11 @@ public class BookingView implements Serializable {
                 new FacesMessage(FacesMessage.SEVERITY_INFO, "Cancelled", "Booking cancelled"));
     }
 
+    /**
+     * Cancel all bookings for a given user (manager action).
+     *
+     * @param user target user
+     */
     public void cancelAllBookingsForUser(User user) {
         if (user == null) return;
         try {
@@ -241,22 +289,54 @@ public class BookingView implements Serializable {
         }
     }
 
-    // Getters & Setters
+    /** Returns the schedule model used by the calendar. */
     public ScheduleModel getEventModel() { return eventModel; }
+
+    /** Returns the currently selected schedule event. */
     public ScheduleEvent<?> getEvent() { return event; }
+
+    /** Set the currently selected event. */
     public void setEvent(ScheduleEvent<?> event) { this.event = event; }
+
+    /** Returns the clicked date for booking creation. */
     public LocalDate getClickedDate() { return clickedDate; }
+
+    /** Set the clicked date for booking creation. */
     public void setClickedDate(LocalDate clickedDate) { this.clickedDate = clickedDate; }
+
+    /** Returns the selected start time. */
     public LocalTime getStartTime() { return startTime; }
+
+    /** Set the start time. */
     public void setStartTime(LocalTime startTime) { this.startTime = startTime; }
+
+    /** Returns the selected end time. */
     public LocalTime getEndTime() { return endTime; }
+
+    /** Set the end time. */
     public void setEndTime(LocalTime endTime) { this.endTime = endTime; }
+
+    /** Returns the chosen machine type for a new booking. */
     public MachineType getSelectedType() { return selectedType; }
+
+    /** Set the chosen machine type for a new booking. */
     public void setSelectedType(MachineType selectedType) { this.selectedType = selectedType; }
+
+    /** Returns the current user's bookings. */
     public List<Booking> getMyBookings() { return myBookings; }
+
+    /** Returns all bookings visible to the view. */
     public List<Booking> getAllBookings() { return allBookings; }
+
+    /** Set the list of all bookings (used by UI refresh). */
     public void setAllBookings(List<Booking> allBookings) { this.allBookings = allBookings; }
+
+    /** Available machine type options for the selected timeslot. */
     public List<SelectItem> getMachineTypeOptions() { return machineTypeOptions; }
+
+    /** Returns filtered bookings used by table filtering. */
     public List<Booking> getFilteredBookings() { return filteredBookings; }
+
+    /** Set filtered bookings (table filter). */
     public void setFilteredBookings(List<Booking> filteredBookings) { this.filteredBookings = filteredBookings; }
 }

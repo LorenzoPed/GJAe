@@ -20,28 +20,56 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Service handling booking lifecycle: creation, queries, cancellations and reactions when machines are disabled.
+ */
 @Service
 public class BookingService {
 
+    /**
+     * Result DTO returned when a machine is disabled: counts of impacted/rescheduled/cancelled bookings.
+     */
     public static class DisableMachineResult {
         private final int impactedBookings;
         private final int rescheduledBookings;
         private final int cancelledBookings;
 
+        /**
+         * Create a result instance.
+         *
+         * @param impactedBookings number of bookings impacted
+         * @param rescheduledBookings number of bookings rescheduled
+         * @param cancelledBookings number of bookings cancelled
+         */
         public DisableMachineResult(int impactedBookings, int rescheduledBookings, int cancelledBookings) {
             this.impactedBookings = impactedBookings;
             this.rescheduledBookings = rescheduledBookings;
             this.cancelledBookings = cancelledBookings;
         }
 
+        /**
+         * Number of impacted bookings (future ones on the disabled machine).
+         *
+         * @return number of impacted bookings
+         */
         public int getImpactedBookings() {
             return impactedBookings;
         }
 
+        /**
+         * Number of bookings successfully rescheduled to other machines.
+         *
+         * @return number of rescheduled bookings
+         */
         public int getRescheduledBookings() {
             return rescheduledBookings;
         }
 
+        /**
+         * Number of bookings cancelled because no alternative was available.
+         *
+         * @return number of cancelled bookings
+         */
         public int getCancelledBookings() {
             return cancelledBookings;
         }
@@ -53,6 +81,15 @@ public class BookingService {
     private final MaintenanceRepository maintenanceRepository;
     private final NotificationService notificationService; // <--- 1. NUOVO SERVIZIO
 
+    /**
+     * Create a BookingService with required repositories and notification service.
+     *
+     * @param bookingRepository repository for bookings
+     * @param machineRepository repository for machines
+     * @param userRepository repository for users
+     * @param maintenanceRepository repository for maintenances
+     * @param notificationService service to send user notifications
+     */
     public BookingService(
             BookingRepository bookingRepository,
             MachineRepository machineRepository,
@@ -67,6 +104,12 @@ public class BookingService {
         this.notificationService = notificationService;
     }
 
+    /**
+     * Create a booking for the authenticated user if a machine of the requested type is available.
+     *
+     * @param request booking request containing times and machine type
+     * @return the saved Booking
+     */
     public Booking createBooking(BookingRequest request) {
         if (request.getStartTime() == null || request.getEndTime() == null || request.getMachineType() == null) {
             throw new IllegalArgumentException("Start time, end time, and machine type are required.");
@@ -122,26 +165,52 @@ public class BookingService {
         return bookingRepository.save(booking);
     }
 
+    /**
+     * Return all bookings belonging to the given user ordered descending by start time.
+     *
+     * @param user user entity
+     * @return list of bookings
+     */
     public List<Booking> getAllBookingsByUser(User user) {
         return bookingRepository.findByUserOrderByStartTimeDesc(user);
     }
 
+    /**
+     * Return all bookings in the system.
+     *
+     * @return all bookings
+     */
     @Transactional(readOnly = true)
     public List<Booking> getAllBookings() {
         return bookingRepository.findAll();
     }
 
+    /**
+     * Return all bookings that are not cancelled.
+     *
+     * @return active bookings
+     */
     @Transactional(readOnly = true)
     public List<Booking> getActiveBookings() {
         return bookingRepository.findByStatusNot(BookingStatus.CANCELLED);
     }
 
+    /**
+     * Return the current authenticated user's active bookings.
+     *
+     * @return list of bookings for current user
+     */
     @Transactional(readOnly = true)
     public List<Booking> getMyActiveBookings() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         return bookingRepository.findByUser_UsernameAndStatusNot(username, BookingStatus.CANCELLED);
     }
 
+    /**
+     * Cancel a booking if the current user is owner or has manager role.
+     *
+     * @param bookingId id of the booking to cancel
+     */
     public void cancelBooking(Long bookingId) {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new RuntimeException("Booking not found with id: " + bookingId));
@@ -167,6 +236,8 @@ public class BookingService {
     /**
      * Cancella (soft delete) tutte le prenotazioni attive/future di un utente specifico.
      * Usato dal Manager per ripulire i dati di uno studente.
+     *
+     * @param userId id of the user whose bookings will be cancelled
      */
     @Transactional
     public void cancelAllUserBookings(Long userId) {
@@ -179,6 +250,14 @@ public class BookingService {
         bookingRepository.saveAll(userBookings);
     }
 
+    /**
+     * Check whether there is capacity for a booking of the given machine type in the interval.
+     *
+     * @param type machine type
+     * @param start interval start
+     * @param end interval end
+     * @return true if slot is available
+     */
     public boolean isSlotAvailable(MachineType type, LocalDateTime start, LocalDateTime end) {
         long enabledMachines = machineRepository.countByTypeAndEnabledTrue(type);
         if (enabledMachines <= 0) {
@@ -207,6 +286,13 @@ public class BookingService {
         return activeBookings < availableMachines;
     }
 
+    /**
+     * Retrieve bookings optionally filtered by userId or machineId.
+     *
+     * @param userId optional user id
+     * @param machineId optional machine id
+     * @return list of bookings matching filters
+     */
     public List<Booking> getBookings(Long userId, Long machineId) {
         if (userId != null) {
             return bookingRepository.findByUserId(userId);
@@ -218,10 +304,11 @@ public class BookingService {
     }
 
     /**
-     * Called when a manager disables a machine OR deletes it.
-     * Reschedules future bookings to another enabled machine of the same type when possible.
-     * Otherwise cancels them.
-     * Sends NOTIFICATIONS to users in both cases.
+     * When a machine is disabled or deleted, attempt to reschedule its future bookings to other enabled machines.
+     * If no alternative is found the booking is cancelled. Notifications are sent to affected users.
+     *
+     * @param machineId id of the disabled machine
+     * @return result containing counts of impacted/rescheduled/cancelled bookings
      */
     @Transactional
     public DisableMachineResult handleMachineDisabled(Long machineId) {
@@ -279,6 +366,13 @@ public class BookingService {
         return new DisableMachineResult(impacted.size(), rescheduled, cancelled);
     }
 
+    /**
+     * Find an alternative enabled machine suitable for the given booking (no booking/maintenance overlap).
+     *
+     * @param originalMachine the machine being replaced
+     * @param booking booking to relocate
+     * @return optional alternative machine
+     */
     private Optional<Machine> findAlternativeMachineForBooking(Machine originalMachine, Booking booking) {
         MachineType type = originalMachine.getType();
         List<Machine> candidates = machineRepository.findByTypeAndEnabledTrue(type);
@@ -314,3 +408,4 @@ public class BookingService {
         return Optional.empty();
     }
 }
+

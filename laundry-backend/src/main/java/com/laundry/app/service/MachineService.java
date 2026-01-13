@@ -13,6 +13,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+/**
+ * Service managing machines: CRUD operations and cleanup when machines are deleted/disabled.
+ */
 @Service
 public class MachineService {
 
@@ -20,8 +23,15 @@ public class MachineService {
     private final BookingRepository bookingRepository;
     private final MaintenanceRepository maintenanceRepository;
     private final BookingService bookingService;
-    // RIMOSSO: NotificationService (ora se ne occupa BookingService)
 
+    /**
+     * Construct the machine service with necessary repositories and booking service.
+     *
+     * @param machineRepository repository used to manage Machine entities
+     * @param bookingRepository repository used to manage Booking entities
+     * @param maintenanceRepository repository used to manage Maintenance entities
+     * @param bookingService service used to handle booking reschedule/cancel operations
+     */
     @Autowired
     public MachineService(MachineRepository machineRepository,
                           BookingRepository bookingRepository,
@@ -33,19 +43,42 @@ public class MachineService {
         this.bookingService = bookingService;
     }
 
+    /**
+     * Return all machines.
+     *
+     * @return list of machines
+     */
     public List<Machine> getAllMachines() {
         return machineRepository.findAll();
     }
 
+    /**
+     * Return a machine by id, throwing if not found.
+     *
+     * @param id machine id
+     * @return machine
+     */
     public Machine getMachineById(Long id) {
         return machineRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Machine not found with id: " + id));
     }
 
+    /**
+     * Create and persist a new machine.
+     *
+     * @param machine machine entity to create
+     * @return saved machine
+     */
     public Machine createMachine(Machine machine) {
         return machineRepository.save(machine);
     }
 
+    /**
+     * Delete a machine and handle impacted bookings / maintenances.
+     *
+     * @param id id of the machine to delete
+     * @return summary message about performed actions
+     */
     @Transactional
     public String deleteMachine(Long id) {
         if (!machineRepository.existsById(id)) {
@@ -85,6 +118,14 @@ public class MachineService {
                 result.getRescheduledBookings(), result.getCancelledBookings());
     }
 
+    /**
+     * Update only the machine name and type.
+     *
+     * @param id machine id
+     * @param name new name
+     * @param type new machine type
+     * @return updated machine
+     */
     public Machine updateMachineNameAndType(Long id, String name, MachineType type) {
         if (name == null || name.trim().isEmpty()) {
             throw new IllegalArgumentException("Machine name cannot be empty.");
@@ -100,6 +141,13 @@ public class MachineService {
         return machineRepository.save(machine);
     }
 
+    /**
+     * Update a machine; if disabling, delegates to bookingService to reschedule/cancel bookings.
+     *
+     * @param id machine id
+     * @param machineDetails new machine data
+     * @return updated machine
+     */
     @Transactional // Aggiungi Transactional perché facciamo modifiche multiple
     public Machine updateMachine(Long id, Machine machineDetails) {
         Machine existingMachine = getMachineById(id);

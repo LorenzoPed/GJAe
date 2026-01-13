@@ -16,28 +16,50 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Service managing maintenance schedules and their impact on bookings (reschedule/cancel + notify).
+ */
 @Service
 public class MaintenanceService {
 
+    /**
+     * Result returned after scheduling maintenance: how many bookings were impacted/rescheduled/cancelled.
+     */
     public static class MaintenanceResult {
         private final int impactedBookings;
         private final int rescheduledBookings;
         private final int cancelledBookings;
 
+        /**
+         * Create a maintenance result.
+         *
+         * @param impactedBookings number impacted
+         * @param rescheduledBookings number rescheduled
+         * @param cancelledBookings number cancelled
+         */
         public MaintenanceResult(int impactedBookings, int rescheduledBookings, int cancelledBookings) {
             this.impactedBookings = impactedBookings;
             this.rescheduledBookings = rescheduledBookings;
             this.cancelledBookings = cancelledBookings;
         }
 
+        /**
+         * Number of impacted bookings.
+         */
         public int getImpactedBookings() {
             return impactedBookings;
         }
 
+        /**
+         * Number of bookings rescheduled.
+         */
         public int getRescheduledBookings() {
             return rescheduledBookings;
         }
 
+        /**
+         * Number of bookings cancelled.
+         */
         public int getCancelledBookings() {
             return cancelledBookings;
         }
@@ -48,6 +70,9 @@ public class MaintenanceService {
     private final BookingRepository bookingRepository;
     private final NotificationService notificationService; // <--- 1. NUOVO
 
+    /**
+     * Construct the maintenance service with required repositories and notification service.
+     */
     public MaintenanceService(
             MaintenanceRepository maintenanceRepository,
             MachineRepository machineRepository,
@@ -60,6 +85,15 @@ public class MaintenanceService {
         this.notificationService = notificationService;
     }
 
+    /**
+     * Schedule a maintenance window for a machine and reschedule/cancel overlapping bookings.
+     *
+     * @param machineId machine id
+     * @param start maintenance start
+     * @param end maintenance end
+     * @param reason optional reason
+     * @return result summary about impacted bookings
+     */
     @Transactional
     public MaintenanceResult scheduleMaintenance(Long machineId, LocalDateTime start, LocalDateTime end, String reason) {
         if (machineId == null) {
@@ -130,6 +164,12 @@ public class MaintenanceService {
         return rescheduleOrCancelBookings(machine, impacted);
     }
 
+    /**
+     * Return upcoming maintenances for a machine (ending after now).
+     *
+     * @param machineId machine id
+     * @return list of upcoming Maintenance records
+     */
     @Transactional(readOnly = true)
     public List<Maintenance> getUpcomingMaintenances(Long machineId) {
         if (machineId == null) {
@@ -138,16 +178,32 @@ public class MaintenanceService {
         return maintenanceRepository.findUpcoming(machineId, LocalDateTime.now(), MaintenanceStatus.CANCELLED);
     }
 
+    /**
+     * Return machine ids that are under maintenance at the current time.
+     *
+     * @return list of machine ids under maintenance now
+     */
     @Transactional(readOnly = true)
     public List<Long> getMachineIdsUnderMaintenanceNow() {
         return maintenanceRepository.findMachineIdsUnderMaintenanceAt(LocalDateTime.now(), MaintenanceStatus.CANCELLED);
     }
 
+    /**
+     * Check whether a machine is currently under active maintenance.
+     *
+     * @param machineId machine id
+     * @return true if under maintenance now
+     */
     @Transactional(readOnly = true)
     public boolean isMachineUnderMaintenanceNow(Long machineId) {
         return maintenanceRepository.existsActiveAt(machineId, LocalDateTime.now(), MaintenanceStatus.CANCELLED);
     }
 
+    /**
+     * Cancel a maintenance (mark it as cancelled).
+     *
+     * @param maintenanceId id of the maintenance record
+     */
     @Transactional
     public void cancelMaintenance(Long maintenanceId) {
         Maintenance maintenance = maintenanceRepository.findById(maintenanceId)
@@ -161,7 +217,13 @@ public class MaintenanceService {
         maintenanceRepository.save(maintenance);
     }
 
-    // --- MODIFICATO: Metodo Helper con Notifiche ---
+    /**
+     * Helper that attempts to reschedule or cancel a list of impacted bookings and notifies users.
+     *
+     * @param originalMachine machine under maintenance
+     * @param impacted list of impacted bookings
+     * @return result counts
+     */
     private MaintenanceResult rescheduleOrCancelBookings(Machine originalMachine, List<Booking> impacted) {
         int rescheduled = 0;
         int cancelled = 0;
@@ -202,6 +264,13 @@ public class MaintenanceService {
         return new MaintenanceResult(impacted.size(), rescheduled, cancelled);
     }
 
+    /**
+     * Find an alternative enabled machine (no booking/maintenance overlap) for the given booking.
+     *
+     * @param originalMachine machine being replaced
+     * @param booking booking to move
+     * @return optional alternative machine
+     */
     private Optional<Machine> findAlternativeMachineForBooking(Machine originalMachine, Booking booking) {
         MachineType type = originalMachine.getType();
         List<Machine> candidates = machineRepository.findByTypeAndEnabledTrue(type);

@@ -5,15 +5,29 @@ import com.laundry.app.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+/**
+ * Repository for User entities and common existence checks used at registration/login.
+ */
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
-    // 1. FIND USER FOR LOGIN (Essential)
-    // Spring Security uses this to load details of the user attempting to log in
+    /**
+     * Find a user by username for authentication.
+     * @param username the username
+     * @return optional user
+     */
     Optional<User> findByUsername(String username);
 
-    // 2. EXISTENCE CHECKS (Useful for Registration)
-    // Used to prevent duplicate usernames or emails
+    /**
+     * Check whether a username already exists.
+     * @param username username to check
+     * @return true if exists
+     */
     boolean existsByUsername(String username);
 
+    /**
+     * Check whether an email is already registered.
+     * @param email email to check
+     * @return true if exists
+     */
     boolean existsByEmail(String email);
 }

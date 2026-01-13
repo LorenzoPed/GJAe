@@ -1,3 +1,4 @@
+// java
 package com.laundry.app.controller;
 
 import jakarta.enterprise.context.RequestScoped;
@@ -7,6 +8,9 @@ import lombok.Data;
 import com.laundry.app.service.UserService;
 import com.laundry.app.model.User;
 
+/**
+ * Backing bean handling user registration from the web UI.
+ */
 @Data
 @Named
 @RequestScoped
@@ -18,6 +22,11 @@ public class RegisterController {
     @Inject
     private UserService userService;
 
+    /**
+     * Register a new user with provided username, password and email.
+     *
+     * @return navigation outcome to the login page with faces redirect
+     */
     public String register() {
         User user = new User();
         user.setUsername(username);

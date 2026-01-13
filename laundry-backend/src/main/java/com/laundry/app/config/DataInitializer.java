@@ -1,7 +1,8 @@
+// java
 package com.laundry.app.config;
 
 import com.laundry.app.model.Machine;
-import com.laundry.app.model.MachineType; // Using the Enum I saw in your screenshot
+import com.laundry.app.model.MachineType;
 import com.laundry.app.model.Role;
 import com.laundry.app.model.User;
 import com.laundry.app.repository.MachineRepository;
@@ -11,9 +12,22 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+/**
+ * Seeds initial application data (users and machines) on startup if absent.
+ */
 @Configuration
 public class DataInitializer {
 
+    /**
+     * Initialize sample data at application startup.
+     *
+     * Creates a manager user, a standard user and a few machines if they do not already exist.
+     *
+     * @param userRepository repository used to persist users
+     * @param machineRepository repository used to persist machines
+     * @param passwordEncoder encoder used to hash initial passwords
+     * @return a CommandLineRunner that performs data seeding on application start
+     */
     @Bean
     CommandLineRunner initDatabase(UserRepository userRepository,
                                    MachineRepository machineRepository,
@@ -64,7 +78,7 @@ public class DataInitializer {
                 Machine d1 = new Machine();
                 d1.setName("Dryer Turbo");
                 d1.setEnabled(true);
-                d1.setType(MachineType.DRYER); // Make sure 'DRYER' exists in your Enum
+                d1.setType(MachineType.DRYER);
                 machineRepository.save(d1);
 
                 System.out.println("✅ Machines created");

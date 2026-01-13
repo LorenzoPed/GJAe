@@ -14,6 +14,9 @@ import java.io.Serializable;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * JSF view bean for user notifications: load unread notifications and mark them as read.
+ */
 @Component
 @ViewScoped
 public class NotificationView implements Serializable {
@@ -26,11 +29,17 @@ public class NotificationView implements Serializable {
 
     private List<Notification> unreadNotifications;
 
+    /**
+     * Initialize and load current user's unread notifications.
+     */
     @PostConstruct
     public void init() {
         loadNotifications();
     }
 
+    /**
+     * Load unread notifications for the currently authenticated user.
+     */
     public void loadNotifications() {
         // 1. Prendi lo username di chi è loggato ora
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -45,6 +54,11 @@ public class NotificationView implements Serializable {
         }
     }
 
+    /**
+     * Mark a notification as read and refresh the list.
+     *
+     * @param n notification to mark as read
+     */
     public void markRead(Notification n) {
         if (n != null) {
             notificationService.markAsRead(n.getId());
@@ -52,10 +66,20 @@ public class NotificationView implements Serializable {
         }
     }
 
+    /**
+     * Return unread notifications for display.
+     *
+     * @return list of unread notifications
+     */
     public List<Notification> getUnreadNotifications() {
         return unreadNotifications;
     }
 
+    /**
+     * Return the count of unread notifications.
+     *
+     * @return number of unread notifications
+     */
     public int getCount() {
         return unreadNotifications == null ? 0 : unreadNotifications.size();
     }

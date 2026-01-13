@@ -19,6 +19,25 @@
             width: 400px;
             padding: 20px;
         }
+        /* Buttons row: arrow narrow on the left, register fills remaining space */
+        .buttons-row {
+            display: flex;
+            gap: 8px;
+            width: 100%;
+            justify-content: flex-end;
+            align-items: center;
+            margin-top: 8px;
+        }
+        .back-btn {
+            min-width: 40px;
+            width: 40px;
+            height: 38px;
+            padding: 0;
+        }
+        .register-btn {
+            flex: 1 1 auto;
+            height: 38px;
+        }
     </style>
 </h:head>
 
@@ -48,7 +67,18 @@
                     <p:outputLabel for="@previous" value="Password"/>
                 </span>
             </div>
-            <p:commandButton value="Register" action="#{registerController.register}" icon="pi pi-user-plus" style="width: 100%;" />
+
+            <div class="buttons-row">
+                <p:button outcome="login?faces-redirect=true"
+                          icon="pi pi-arrow-left"
+                          styleClass="back-btn"
+                          title="Back to login" />
+                <p:commandButton value="Register"
+                                 action="#{registerController.register}"
+                                 icon="pi pi-user-plus"
+                                 styleClass="register-btn"
+                                 ajax="false" />
+            </div>
         </h:form>
     </p:card>
 </h:body>

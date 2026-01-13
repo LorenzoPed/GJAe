@@ -7,10 +7,18 @@ import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.io.IOException;
 
+/**
+ * Navigation view used to perform role-based redirects after login.
+ */
 @Named
 @RequestScoped
 public class NavigationView {
 
+    /**
+     * Redirects the current user to the appropriate landing page based on role.
+     *
+     * @throws IOException if redirect fails
+     */
     public void redirectBasedOnRole() throws IOException {
         boolean isManager = SecurityContextHolder.getContext()
                 .getAuthentication()

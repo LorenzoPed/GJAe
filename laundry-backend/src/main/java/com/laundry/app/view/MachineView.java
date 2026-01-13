@@ -17,36 +17,54 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * JSF view bean for machine management: list/create/edit/delete and schedule maintenance.
+ */
 @Component
 @ViewScoped
 public class MachineView implements Serializable {
 
-    /**
-     * Target for edit dialog messages (must match ids in manager-dashboard.xhtml)
-     */
     private static final String EDIT_DIALOG_CLIENT_ID = "editForm:editMachineDialog";
 
     private final MachineService machineService;
+
     private final MaintenanceService maintenanceService;
+
     private final BookingService bookingService;
 
     private List<Machine> machines;
+
     private List<Long> machineIdsUnderMaintenanceNow;
 
     private Long selectedMachineId;
+
     private String editName;
+
     private MachineType editType;
 
     private String newName;
+
     private MachineType newType;
 
     private Long maintenanceMachineId;
+
     private String maintenanceMachineName;
+
     private LocalDateTime maintenanceStart;
+
     private LocalDateTime maintenanceEnd;
+
     private String maintenanceReason;
+
     private List<Maintenance> upcomingMaintenances;
 
+    /**
+     * Construct the MachineView with required services.
+     *
+     * @param machineService service for machine operations
+     * @param maintenanceService service for maintenance operations
+     * @param bookingService service for booking operations (reschedule notifications)
+     */
     public MachineView(
         MachineService machineService,
         MaintenanceService maintenanceService,
@@ -57,16 +75,27 @@ public class MachineView implements Serializable {
         this.bookingService = bookingService;
     }
 
+    /**
+     * Initialize view and load machines.
+     */
     @PostConstruct
     public void init() {
         reloadMachines();
     }
 
+    /**
+     * Reload machine list and maintenance state.
+     */
     public void reloadMachines() {
         this.machines = machineService.getAllMachines();
         this.machineIdsUnderMaintenanceNow = maintenanceService.getMachineIdsUnderMaintenanceNow();
     }
 
+    /**
+     * Open the edit dialog and populate fields for the selected machine.
+     *
+     * @param machine machine to edit
+     */
     public void openEdit(Machine machine) {
         if (machine == null) {
             return;
@@ -76,6 +105,9 @@ public class MachineView implements Serializable {
         this.editType = machine.getType();
     }
 
+    /**
+     * Save edited machine name/type (validation handled in service).
+     */
     public void saveEdit() {
         FacesContext faces = FacesContext.getCurrentInstance();
         setCallbackSuccess(false);
@@ -118,6 +150,9 @@ public class MachineView implements Serializable {
         }
     }
 
+    /**
+     * Create a new machine from dialog inputs.
+     */
     // This method is called from the Save button in the dialog
     public void createMachine() {
         try {
@@ -150,12 +185,11 @@ public class MachineView implements Serializable {
         }
     }
 
-    public void openCreate() {
-        this.newName = "";
-        this.newType = MachineType.WASHER; // Default type
-    }
-
-
+    /**
+     * Delete a machine and handle impacted bookings/maintenances.
+     *
+     * @param machine target machine
+     */
     public void deleteMachine(Machine machine) {
         FacesContext faces = FacesContext.getCurrentInstance();
 
@@ -182,6 +216,11 @@ public class MachineView implements Serializable {
         }
     }
 
+    /**
+     * Toggle the enabled state of a machine and handle impact if disabling.
+     *
+     * @param machine machine to toggle
+     */
     public void toggleEnabled(Machine machine) {
         FacesContext faces = FacesContext.getCurrentInstance();
         setCallbackSuccess(false);
@@ -234,6 +273,11 @@ public class MachineView implements Serializable {
         }
     }
 
+    /**
+     * Open maintenance dialog and load upcoming maintenances for the machine.
+     *
+     * @param machine target machine
+     */
     public void openMaintenance(Machine machine) {
         if (machine == null) {
             return;
@@ -247,6 +291,9 @@ public class MachineView implements Serializable {
         this.upcomingMaintenances = maintenanceService.getUpcomingMaintenances(machine.getId());
     }
 
+    /**
+     * Apply maintenance window and notify impacted users.
+     */
     public void applyMaintenance() {
         FacesContext faces = FacesContext.getCurrentInstance();
         setCallbackSuccess(false);
@@ -295,6 +342,11 @@ public class MachineView implements Serializable {
         }
     }
 
+    /**
+     * Cancel a maintenance record.
+     *
+     * @param maintenanceId id of the maintenance to cancel
+     */
     public void cancelMaintenance(Long maintenanceId) {
         FacesContext faces = FacesContext.getCurrentInstance();
         setCallbackSuccess(false);
@@ -372,94 +424,117 @@ public class MachineView implements Serializable {
         PrimeFaces.current().ajax().addCallbackParam("success", success);
     }
 
+    /** Returns the list of machines for display. */
     public List<Machine> getMachines() {
         return machines;
     }
 
+    /** Returns the selected machine id for edit dialogs. */
     public Long getSelectedMachineId() {
         return selectedMachineId;
     }
 
+    /** Set selected machine id. */
     public void setSelectedMachineId(Long selectedMachineId) {
         this.selectedMachineId = selectedMachineId;
     }
 
+    /** Returns the edit dialog name field. */
     public String getEditName() {
         return editName;
     }
 
+    /** Set the edit dialog name field. */
     public void setEditName(String editName) {
         this.editName = editName;
     }
 
+    /** Returns the edit dialog machine type. */
     public MachineType getEditType() {
         return editType;
     }
 
+    /** Set the edit dialog machine type. */
     public void setEditType(MachineType editType) {
         this.editType = editType;
     }
 
+    /** Returns available machine types for select components. */
     public MachineType[] getMachineTypes() {
         return MachineType.values();
     }
 
+    /** Returns the new machine name input. */
     public String getNewName() {
         return newName;
     }
 
+    /** Set the new machine name input. */
     public void setNewName(String newName) {
         this.newName = newName;
     }
 
+    /** Returns the new machine type input. */
     public MachineType getNewType() {
         return newType;
     }
 
+    /** Set the new machine type input. */
     public void setNewType(MachineType newType) {
         this.newType = newType;
     }
 
+    /** Returns the id of the machine for which maintenance is being scheduled. */
     public Long getMaintenanceMachineId() {
         return maintenanceMachineId;
     }
 
+    /** Set the id of the machine for which maintenance is being scheduled. */
     public void setMaintenanceMachineId(Long maintenanceMachineId) {
         this.maintenanceMachineId = maintenanceMachineId;
     }
 
+    /** Returns maintenance machine display name. */
     public String getMaintenanceMachineName() {
         return maintenanceMachineName;
     }
 
+    /** Set maintenance machine display name. */
     public void setMaintenanceMachineName(String maintenanceMachineName) {
         this.maintenanceMachineName = maintenanceMachineName;
     }
 
+    /** Returns maintenance start datetime. */
     public LocalDateTime getMaintenanceStart() {
         return maintenanceStart;
     }
 
+    /** Set maintenance start datetime. */
     public void setMaintenanceStart(LocalDateTime maintenanceStart) {
         this.maintenanceStart = maintenanceStart;
     }
 
+    /** Returns maintenance end datetime. */
     public LocalDateTime getMaintenanceEnd() {
         return maintenanceEnd;
     }
 
+    /** Set maintenance end datetime. */
     public void setMaintenanceEnd(LocalDateTime maintenanceEnd) {
         this.maintenanceEnd = maintenanceEnd;
     }
 
+    /** Returns maintenance reason text. */
     public String getMaintenanceReason() {
         return maintenanceReason;
     }
 
+    /** Set maintenance reason text. */
     public void setMaintenanceReason(String maintenanceReason) {
         this.maintenanceReason = maintenanceReason;
     }
 
+    /** Returns upcoming maintenances for the selected machine. */
     public List<Maintenance> getUpcomingMaintenances() {
         return upcomingMaintenances;
     }

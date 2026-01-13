@@ -9,10 +9,17 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * Lightweight health/status service for the laundry backend.
+ */
 @Service
 public class LaundryService {
 
-    // -------- Status --------
+    /**
+     * Return a simple status DTO indicating the service is running.
+     *
+     * @return status information
+     */
     public Status getStatus() {
         return new Status("laundry-backend", "running");
     }
