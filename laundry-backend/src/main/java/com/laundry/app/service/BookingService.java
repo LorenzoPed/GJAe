@@ -79,7 +79,7 @@ public class BookingService {
     private final MachineRepository machineRepository;
     private final UserRepository userRepository;
     private final MaintenanceRepository maintenanceRepository;
-    private final NotificationService notificationService; // <--- 1. NUOVO SERVIZIO
+    private final NotificationService notificationService;
 
     /**
      * Create a BookingService with required repositories and notification service.
@@ -95,7 +95,7 @@ public class BookingService {
             MachineRepository machineRepository,
             UserRepository userRepository,
             MaintenanceRepository maintenanceRepository,
-            NotificationService notificationService // <--- 1. INIEZIONE NEL COSTRUTTORE
+            NotificationService notificationService
     ) {
         this.bookingRepository = bookingRepository;
         this.machineRepository = machineRepository;
@@ -234,16 +234,30 @@ public class BookingService {
     }
 
     /**
-     * Cancella (soft delete) tutte le prenotazioni attive/future di un utente specifico.
-     * Usato dal Manager per ripulire i dati di uno studente.
+     * Delete (soft delete) all the active/future reservations of a given user.
+     * Used by Manager to make bulk cancellation of a given user.
+     * Sends a notification for each future booking cancelled.
      *
      * @param userId id of the user whose bookings will be cancelled
      */
     @Transactional
     public void cancelAllUserBookings(Long userId) {
         List<Booking> userBookings = bookingRepository.findByUserId(userId);
+        LocalDateTime now = LocalDateTime.now();
+
         for (Booking booking : userBookings) {
+
             if (booking.getStatus() != BookingStatus.CANCELLED) {
+
+                if (booking.getEndTime().isAfter(now)) {
+                    String msg = String.format(
+                            "ADMIN NOTICE: Your booking on %s at %s has been cancelled by an administrator.",
+                            booking.getStartTime().toLocalDate(),
+                            booking.getStartTime().toLocalTime()
+                    );
+                    notificationService.sendNotification(booking.getUser(), msg);
+                }
+
                 booking.setStatus(BookingStatus.CANCELLED);
             }
         }
@@ -334,13 +348,12 @@ public class BookingService {
             Optional<Machine> alternative = findAlternativeMachineForBooking(disabledMachine, booking);
 
             if (alternative.isPresent()) {
-                // --- SUCCESSO: RISCHEDULATA ---
+                //SUCCESS: RESCHEDULED
                 Machine newMachine = alternative.get();
                 booking.setMachine(newMachine);
                 bookingRepository.save(booking);
                 rescheduled++;
 
-                // 2. Notifica di Spostamento
                 String msg = String.format(
                         "UPDATE: Your booking on %s has been moved to machine '%s' because the original one is unavailable.",
                         booking.getStartTime().toLocalDate(),
@@ -349,12 +362,11 @@ public class BookingService {
                 notificationService.sendNotification(booking.getUser(), msg);
 
             } else {
-                // --- FALLIMENTO: CANCELLATA ---
+                // --- FAILURE: CANCELED ---
                 booking.setStatus(BookingStatus.CANCELLED);
                 bookingRepository.save(booking);
                 cancelled++;
 
-                // 2. Notifica di Cancellazione
                 String msg = String.format(
                         "ALERT: Your booking on %s has been CANCELLED. The machine is out of order/removed and no other machines are available at that time.",
                         booking.getStartTime().toLocalDate()
