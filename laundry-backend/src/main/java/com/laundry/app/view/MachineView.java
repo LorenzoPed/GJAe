@@ -197,15 +197,17 @@ public class MachineView implements Serializable {
 
         try {
             //Call MachineService method
-            String resultMessage = machineService.deleteMachine(machine.getId());
+            BookingService.DisableMachineResult result = machineService.deleteMachine(machine.getId());
 
             //Update the view
             reloadMachines();
 
             faces.addMessage(null, new FacesMessage(
                     FacesMessage.SEVERITY_INFO,
-                    "Success",
-                    resultMessage
+                    "Machine deleted successfully",
+                    "Impacted bookings: " + result.getImpactedBookings()
+                        + " (rescheduled: " + result.getRescheduledBookings()
+                        + ", cancelled: " + result.getCancelledBookings() + ")"
             ));
 
         } catch (Exception e) {
@@ -224,56 +226,62 @@ public class MachineView implements Serializable {
      * @param machine machine to toggle
      */
     public void toggleEnabled(Machine machine) {
-        FacesContext faces = FacesContext.getCurrentInstance();
-        setCallbackSuccess(false);
+    FacesContext faces = FacesContext.getCurrentInstance();
+    setCallbackSuccess(false);
 
-        if (machine == null || machine.getId() == null) {
-            faces.addMessage(null, new FacesMessage(
-                FacesMessage.SEVERITY_ERROR,
-                "Error",
-                "No machine selected."
-            ));
-            return;
-        }
-
-        boolean newEnabled = !machine.isEnabled();
-
-        try {
-            Machine details = new Machine();
-            details.setName(machine.getName());
-            details.setType(machine.getType());
-            details.setEnabled(newEnabled);
-
-            machineService.updateMachine(machine.getId(), details);
-
-            if (!newEnabled) {
-                BookingService.DisableMachineResult result = bookingService.handleMachineDisabled(machine.getId());
-
-                faces.addMessage(null, new FacesMessage(
-                    FacesMessage.SEVERITY_INFO,
-                    "Machine disabled",
-                    "Impacted bookings: " + result.getImpactedBookings()
-                        + " (rescheduled: " + result.getRescheduledBookings()
-                        + ", cancelled: " + result.getCancelledBookings() + ")"
-                ));
-            } else {
-                faces.addMessage(null, new FacesMessage(
-                    FacesMessage.SEVERITY_INFO,
-                    "Machine enabled",
-                    "Machine status updated successfully."
-                ));
-            }
-
-            reloadMachines();
-            setCallbackSuccess(true);
-        } catch (RuntimeException ex) {
-            faces.addMessage(null, new FacesMessage(
-                FacesMessage.SEVERITY_ERROR,
-                "Error",
-                ex.getMessage()
-            ));
-        }
+    if (machine == null || machine.getId() == null) {
+        faces.addMessage(null, new FacesMessage(
+            FacesMessage.SEVERITY_ERROR,
+            "Error",
+            "No machine selected."
+        ));
+        return;
     }
+
+    boolean newEnabled = !machine.isEnabled();
+
+    try {
+        BookingService.DisableMachineResult result = null;
+        
+        // Si on désactive, traiter les bookings AVANT la mise à jour
+        if (!newEnabled) {
+            result = bookingService.handleMachineDisabled(machine.getId());
+        }
+
+        // Puis mettre à jour la machine
+        Machine details = new Machine();
+        details.setName(machine.getName());
+        details.setType(machine.getType());
+        details.setEnabled(newEnabled);
+
+        machineService.updateMachine(machine.getId(), details);
+
+        if (!newEnabled && result != null) {
+            faces.addMessage(null, new FacesMessage(
+                FacesMessage.SEVERITY_INFO,
+                "Machine disabled",
+                "Impacted bookings: " + result.getImpactedBookings()
+                    + " (rescheduled: " + result.getRescheduledBookings()
+                    + ", cancelled: " + result.getCancelledBookings() + ")"
+            ));
+        } else {
+            faces.addMessage(null, new FacesMessage(
+                FacesMessage.SEVERITY_INFO,
+                "Machine enabled",
+                "Machine status updated successfully."
+            ));
+        }
+
+        reloadMachines();
+        setCallbackSuccess(true);
+    } catch (RuntimeException ex) {
+        faces.addMessage(null, new FacesMessage(
+            FacesMessage.SEVERITY_ERROR,
+            "Error",
+            ex.getMessage()
+        ));
+    }
+}
 
     /**
      * Open maintenance dialog and load upcoming maintenances for the machine.

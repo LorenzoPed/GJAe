@@ -80,7 +80,7 @@ public class MachineService {
      * @return summary message about performed actions
      */
     @Transactional
-    public String deleteMachine(Long id) {
+    public BookingService.DisableMachineResult deleteMachine(Long id) {
         if (!machineRepository.existsById(id)) {
             throw new RuntimeException("Machine not found with id: " + id);
         }
@@ -104,14 +104,13 @@ public class MachineService {
             booking.setMachine(null);
         }
 
-        // Salviamo lo scollegamento
+        // 3. Update remaining bookings
         bookingRepository.saveAll(remainingBookings);
 
-        // 4. ELIMINAZIONE FISICA DELLA MACCHINA
+        // 4. Delete machine
         machineRepository.deleteById(id);
 
-        return String.format("Machine deleted successfully. %d bookings were rescheduled, %d were cancelled.",
-                result.getRescheduledBookings(), result.getCancelledBookings());
+        return result;
     }
 
     /**

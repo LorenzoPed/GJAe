@@ -134,15 +134,15 @@ class MachineServiceTest {
 
         // Stub bookingService.handleMachineDisabled to return a safe mock result
         BookingService.DisableMachineResult mockResult = mock(BookingService.DisableMachineResult.class);
-        when(mockResult.getRescheduledBookings()).thenReturn(0);
         when(bookingService.handleMachineDisabled(1L)).thenReturn(mockResult);
 
         // Ensure bookingRepository returns an empty list (no remaining bookings)
         when(bookingRepository.findByMachineId(1L)).thenReturn(List.of());
 
         // Call the method under test
-        machineService.deleteMachine(1L);
+        BookingService.DisableMachineResult result = machineService.deleteMachine(1L);
 
+        assertNotNull(result);
         verify(machineRepository, times(1)).deleteById(1L);
         verify(maintenanceRepository, times(1)).deleteByMachineId(1L);
         verify(bookingRepository, times(1)).findByMachineId(1L);
