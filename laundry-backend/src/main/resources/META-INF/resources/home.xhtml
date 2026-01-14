@@ -1,83 +1,85 @@
 <!DOCTYPE html>
 <html
-		xmlns="http://www.w3.org/1999/xhtml"
-		xmlns:h="http://xmlns.jcp.org/jsf/html"
-		xmlns:p="http://primefaces.org/ui"
-		xmlns:f="http://xmlns.jcp.org/jsf/core"
-		xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+	xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://xmlns.jcp.org/jsf/html"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:f="http://xmlns.jcp.org/jsf/core"
+	xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
 >
-<f:view locale="en">
+	<f:view locale="en">
+		<h:head>
+			<title>Laundry Booking</title>
+			<style>
+				body {
+					font-family: "Segoe UI", sans-serif;
+					background-color: #f4f4f9;
+					padding: 20px;
+				}
+				.card {
+					background: white;
+					padding: 20px;
+					border-radius: 8px;
+					box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+				}
+				.fc-event {
+					cursor: pointer;
+					border: none;
+				}
+			</style>
+		</h:head>
 
-	<h:head>
-		<title>Laundry Booking</title>
-		<style>
-			body {
-				font-family: "Segoe UI", sans-serif;
-				background-color: #f4f4f9;
-				padding: 20px;
-			}
-			.card {
-				background: white;
-				padding: 20px;
-				border-radius: 8px;
-				box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-			}
-			.fc-event {
-				cursor: pointer;
-				border: none;
-			}
-		</style>
-	</h:head>
+		<h:body>
+			<ui:include src="/navbar.xhtml">
+				<ui:param name="active" value="calendar" />
+			</ui:include>
 
-	<h:body>
-		<ui:include src="/navbar.xhtml">
-			<ui:param name="active" value="calendar" />
-		</ui:include>
+			<div class="card">
+				<h2 style="color: #444">
+					<i
+						class="pi pi-calendar"
+						style="margin-right: 10px; vertical-align: middle"
+					></i>
 
-		<div class="card">
-			<h2 style="color: #444;">
-				<i class="pi pi-calendar" style="margin-right: 10px; vertical-align: middle;"></i>
-
-				<h:outputText
+					<h:outputText
 						value="Manage Schedule"
 						rendered="#{request.isUserInRole('MANAGER')}"
-						style="vertical-align: middle;"
-				/>
-				<h:outputText
+						style="vertical-align: middle"
+					/>
+					<h:outputText
 						value="Select a Date &amp; Time"
 						rendered="#{!request.isUserInRole('MANAGER')}"
-						style="vertical-align: middle;"
-				/>
-			</h2>
+						style="vertical-align: middle"
+					/>
+				</h2>
 
-			<h:form id="scheduleForm">
-				<p:growl id="messages" showDetail="true" />
+				<h:form id="scheduleForm">
+					<p:growl id="messages" showDetail="true" />
 
-				<p:schedule
+					<p:schedule
 						id="schedule"
 						value="#{bookingView.eventModel}"
 						widgetVar="myschedule"
 						clientTimeZone="local"
-				>
-					<p:ajax
+					>
+						<p:ajax
 							event="dateSelect"
 							listener="#{bookingView.onDateSelect}"
 							update=":createDialogForm:eventDetails"
 							oncomplete="PF('createDialog').show();"
 							disabled="#{request.isUserInRole('MANAGER')}"
-					/>
+						/>
 
-					<p:ajax
+						<p:ajax
 							event="eventSelect"
 							listener="#{bookingView.onEventSelect}"
 							update=":detailDialogForm:detailPanel"
 							oncomplete="PF('detailDialog').show();"
-					/>
-				</p:schedule>
-			</h:form>
-		</div>
+						/>
+					</p:schedule>
+				</h:form>
+			</div>
 
-		<p:dialog
+			<p:dialog
 				widgetVar="createDialog"
 				header="New Reservation"
 				modal="true"
@@ -85,30 +87,33 @@
 				hideEffect="fade"
 				responsive="true"
 				width="450"
-		>
-			<h:form id="createDialogForm">
-				<p:outputPanel id="eventDetails" class="ui-fluid">
-					<div class="field" style="margin-bottom: 15px">
-						<p:outputLabel
+			>
+				<h:form id="createDialogForm">
+					<p:outputPanel id="eventDetails" class="ui-fluid">
+						<div class="field" style="margin-bottom: 15px">
+							<p:outputLabel
 								value="Selected Date:"
 								style="font-weight: bold; color: #555"
-						/>
-						<h:outputText
+							/>
+							<h:outputText
 								value="#{bookingView.clickedDate}"
 								style="display: block; font-size: 1.2em; font-weight: bold"
-						>
-							<f:convertDateTime
+							>
+								<f:convertDateTime
 									type="localDate"
 									pattern="EEEE, dd MMMM yyyy"
 									locale="en"
-							/>
-						</h:outputText>
-					</div>
+								/>
+							</h:outputText>
+						</div>
 
-					<div class="formgrid grid" style="display: flex; gap: 10px; margin-bottom: 15px">
-						<div class="field col" style="flex: 1">
-							<p:outputLabel for="from" value="Start Time" />
-							<p:datePicker
+						<div
+							class="formgrid grid"
+							style="display: flex; gap: 10px; margin-bottom: 15px"
+						>
+							<div class="field col" style="flex: 1">
+								<p:outputLabel for="from" value="Start Time" />
+								<p:datePicker
 									id="from"
 									value="#{bookingView.startTime}"
 									timeOnly="true"
@@ -116,15 +121,23 @@
 									stepMinute="30"
 									required="true"
 									locale="en"
-							>
-								<p:ajax event="dateSelect" listener="#{bookingView.onTimeChange}" update="type msgDialog" />
-								<p:ajax event="change" listener="#{bookingView.onTimeChange}" update="type msgDialog" />
-							</p:datePicker>
-						</div>
+								>
+									<p:ajax
+										event="dateSelect"
+										listener="#{bookingView.onTimeChange}"
+										update="type msgDialog"
+									/>
+									<p:ajax
+										event="change"
+										listener="#{bookingView.onTimeChange}"
+										update="type msgDialog"
+									/>
+								</p:datePicker>
+							</div>
 
-						<div class="field col" style="flex: 1">
-							<p:outputLabel for="to" value="End Time" />
-							<p:datePicker
+							<div class="field col" style="flex: 1">
+								<p:outputLabel for="to" value="End Time" />
+								<p:datePicker
 									id="to"
 									value="#{bookingView.endTime}"
 									timeOnly="true"
@@ -132,36 +145,51 @@
 									stepMinute="30"
 									required="true"
 									locale="en"
-							>
-								<p:ajax event="dateSelect" listener="#{bookingView.onTimeChange}" update="type msgDialog" />
-								<p:ajax event="change" listener="#{bookingView.onTimeChange}" update="type msgDialog" />
-							</p:datePicker>
+								>
+									<p:ajax
+										event="dateSelect"
+										listener="#{bookingView.onTimeChange}"
+										update="type msgDialog"
+									/>
+									<p:ajax
+										event="change"
+										listener="#{bookingView.onTimeChange}"
+										update="type msgDialog"
+									/>
+								</p:datePicker>
+							</div>
 						</div>
-					</div>
 
-					<p:staticMessage
+						<p:staticMessage
 							id="msgDialog"
 							severity="warn"
 							summary="FULL"
 							detail="No machines available for these hours"
 							style="width: 100%; margin-bottom: 10px"
 							rendered="#{empty bookingView.selectedType and not empty bookingView.machineTypeOptions}"
-					/>
+						/>
 
-					<div class="field" style="margin-bottom: 15px">
-						<p:outputLabel for="type" value="Machine Type" />
-						<p:selectOneMenu
+						<div class="field" style="margin-bottom: 15px">
+							<p:outputLabel for="type" value="Machine Type" />
+							<p:selectOneMenu
 								id="type"
 								value="#{bookingView.selectedType}"
 								required="true"
-						>
-							<f:selectItems value="#{bookingView.machineTypeOptions}" />
-						</p:selectOneMenu>
-					</div>
-				</p:outputPanel>
+							>
+								<f:selectItems value="#{bookingView.machineTypeOptions}" />
+							</p:selectOneMenu>
+						</div>
+					</p:outputPanel>
 
-				<div style="text-align: right; margin-top: 20px; border-top: 1px solid #eee; padding-top: 10px;">
-					<p:commandButton
+					<div
+						style="
+							text-align: right;
+							margin-top: 20px;
+							border-top: 1px solid #eee;
+							padding-top: 10px;
+						"
+					>
+						<p:commandButton
 							value="Confirm Booking"
 							icon="pi pi-check"
 							action="#{bookingView.createBooking}"
@@ -169,12 +197,12 @@
 							process="@form"
 							oncomplete="if (!args.validationFailed) PF('createDialog').hide();"
 							styleClass="ui-button-success"
-					/>
-				</div>
-			</h:form>
-		</p:dialog>
+						/>
+					</div>
+				</h:form>
+			</p:dialog>
 
-		<p:dialog
+			<p:dialog
 				widgetVar="detailDialog"
 				header="Booking Details"
 				modal="true"
@@ -182,27 +210,54 @@
 				hideEffect="fade"
 				responsive="true"
 				width="400"
-		>
-			<h:form id="detailDialogForm">
-				<p:outputPanel id="detailPanel" style="text-align:center;">
+			>
+				<h:form id="detailDialogForm">
+					<p:outputPanel id="detailPanel" style="text-align: center">
+						<h:panelGrid
+							columns="2"
+							cellpadding="5"
+							rendered="#{not empty bookingView.event}"
+							style="margin: 0 auto; text-align: left; width: 100%"
+						>
+							<h:outputLabel
+								value="Title:"
+								style="font-weight: bold; color: #555"
+							/>
+							<h:outputText
+								value="#{bookingView.event.title}"
+								style="font-weight: bold"
+							/>
 
-					<h:panelGrid columns="2" cellpadding="5" rendered="#{not empty bookingView.event}" style="margin: 0 auto; text-align: left; width: 100%">
+							<h:outputLabel
+								value="Time:"
+								style="font-weight: bold; color: #555"
+							/>
+							<h:outputText value="#{bookingView.event.startDate}">
+								<f:convertDateTime
+									pattern="dd/MM/yyyy HH:mm"
+									type="localDateTime"
+									locale="en"
+								/>
+							</h:outputText>
 
-						<h:outputLabel value="Title:" style="font-weight:bold; color:#555"/>
-						<h:outputText value="#{bookingView.event.title}" style="font-weight: bold"/>
+							<h:outputLabel
+								value="Info:"
+								style="font-weight: bold; color: #555"
+							/>
+							<h:outputText
+								value="#{bookingView.event.description}"
+								style="white-space: pre-line"
+							/>
+						</h:panelGrid>
 
-						<h:outputLabel value="Time:" style="font-weight:bold; color:#555"/>
-						<h:outputText value="#{bookingView.event.startDate}">
-							<f:convertDateTime pattern="dd/MM/yyyy HH:mm" type="localDateTime" locale="en" />
-						</h:outputText>
-
-						<h:outputLabel value="Info:" style="font-weight:bold; color:#555"/>
-						<h:outputText value="#{bookingView.event.description}" style="white-space: pre-line;"/>
-					</h:panelGrid>
-
-					<div style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px;">
-
-						<p:commandButton
+						<div
+							style="
+								margin-top: 20px;
+								border-top: 1px solid #eee;
+								padding-top: 15px;
+							"
+						>
+							<p:commandButton
 								value="Cancel / Delete Booking"
 								action="#{bookingView.deleteSelectedEvent}"
 								process="@this"
@@ -211,27 +266,45 @@
 								styleClass="ui-button-danger"
 								icon="pi pi-trash"
 								style="width: 100%"
-						>
-							<p:confirm header="Confirmation" message="Are you sure you want to cancel this booking?" icon="pi pi-exclamation-triangle" />
-						</p:commandButton>
+								rendered="#{request.isUserInRole('MANAGER')}"
+							>
+								<p:confirm
+									header="Confirmation"
+									message="Are you sure you want to cancel this booking?"
+									icon="pi pi-exclamation-triangle"
+								/>
+							</p:commandButton>
 
-						<p:commandButton
+							<p:commandButton
 								value="Close"
 								type="button"
 								onclick="PF('detailDialog').hide()"
 								styleClass="ui-button-secondary ui-button-flat"
 								style="width: 100%; margin-top: 5px"
-						/>
-					</div>
-				</p:outputPanel>
-			</h:form>
-		</p:dialog>
+							/>
+						</div>
+					</p:outputPanel>
+				</h:form>
+			</p:dialog>
 
-		<p:confirmDialog global="true" showEffect="fade" hideEffect="fade" responsive="true" width="350">
-			<p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no ui-button-flat"/>
-			<p:commandButton value="Yes" type="button" styleClass="ui-confirmdialog-yes ui-button-danger"/>
-		</p:confirmDialog>
-
-	</h:body>
-</f:view>
+			<p:confirmDialog
+				global="true"
+				showEffect="fade"
+				hideEffect="fade"
+				responsive="true"
+				width="350"
+			>
+				<p:commandButton
+					value="No"
+					type="button"
+					styleClass="ui-confirmdialog-no ui-button-flat"
+				/>
+				<p:commandButton
+					value="Yes"
+					type="button"
+					styleClass="ui-confirmdialog-yes ui-button-danger"
+				/>
+			</p:confirmDialog>
+		</h:body>
+	</f:view>
 </html>
