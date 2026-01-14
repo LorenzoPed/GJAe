@@ -1,6 +1,6 @@
 package com.laundry.app.model;
 
-import jakarta.persistence.*; // Importa tutto il necessario per il database
+import jakarta.persistence.*; // Import all necessary JPA annotations
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**

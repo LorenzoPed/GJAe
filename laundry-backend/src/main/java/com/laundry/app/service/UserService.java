@@ -36,7 +36,7 @@ public class UserService {
      * @return persisted user
      */
     public User createUser(User user) {
-        // Vérifie l'unicité (optionnel mais recommandé)
+        // Validate uniqueness (recommended)
         if (userRepository.existsByUsername(user.getUsername())) {
             throw new RuntimeException("Username already exists");
         }
@@ -49,13 +49,12 @@ public class UserService {
             String defaultPlain = "change-me";
             user.setPassword(passwordEncoder.encode(defaultPlain));
         } else {
-            // Encode le mot de passe fourni
+            // Encode the provided password
             user.setPassword(passwordEncoder.encode(user.getPassword()));
         }
 
-        // Définit un rôle par défaut si besoin (ex: USER)
+        // Set a default role if missing (e.g. USER)
         if (user.getRole() == null) {
-            // Remplace par ton enum ou valeur par défaut
             user.setRole(com.laundry.app.model.Role.USER);
         }
         return userRepository.save(user);

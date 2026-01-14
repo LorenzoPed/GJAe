@@ -54,7 +54,7 @@ class MachineServiceTest {
     void setUp() {
         mockMachine = new Machine();
         mockMachine.setId(1L);
-        mockMachine.setName("Lavatrice A");
+        mockMachine.setName("Washer A");
         mockMachine.setEnabled(true);
         mockMachine.setType(MachineType.WASHER);
     }
@@ -63,7 +63,7 @@ class MachineServiceTest {
     void getAllMachines_Success() {
         Machine machine2 = new Machine();
         machine2.setId(2L);
-        machine2.setName("Asciugatrice B");
+        machine2.setName("Dryer B");
         machine2.setEnabled(true);
         machine2.setType(MachineType.DRYER);
 
@@ -82,7 +82,7 @@ class MachineServiceTest {
         Machine result = machineService.getMachineById(1L);
 
         assertNotNull(result);
-        assertEquals("Lavatrice A", result.getName());
+        assertEquals("Washer A", result.getName());
         assertEquals(MachineType.WASHER, result.getType());
     }
 
@@ -111,7 +111,7 @@ class MachineServiceTest {
     @Test
     void updateMachine_Success() {
         Machine updatedDetails = new Machine();
-        updatedDetails.setName("Lavatrice A - Updated");
+        updatedDetails.setName("Washer A - Updated");
         updatedDetails.setEnabled(false);
         updatedDetails.setType(MachineType.DRYER);
 
@@ -121,7 +121,7 @@ class MachineServiceTest {
         Machine result = machineService.updateMachine(1L, updatedDetails);
 
         assertNotNull(result);
-        assertEquals("Lavatrice A - Updated", result.getName());
+        assertEquals("Washer A - Updated", result.getName());
         assertFalse(result.isEnabled());
         assertEquals(MachineType.DRYER, result.getType());
 
