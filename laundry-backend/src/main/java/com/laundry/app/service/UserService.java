@@ -43,8 +43,16 @@ public class UserService {
         if (userRepository.existsByEmail(user.getEmail())) {
             throw new RuntimeException("Email already exists");
         }
-        // Encode le mot de passe
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
+
+        // Ensure password is present: if missing, set a default temporary password (encoded)
+        if (user.getPassword() == null || user.getPassword().trim().isEmpty()) {
+            String defaultPlain = "change-me";
+            user.setPassword(passwordEncoder.encode(defaultPlain));
+        } else {
+            // Encode le mot de passe fourni
+            user.setPassword(passwordEncoder.encode(user.getPassword()));
+        }
+
         // Définit un rôle par défaut si besoin (ex: USER)
         if (user.getRole() == null) {
             // Remplace par ton enum ou valeur par défaut
